@@ -231,12 +231,18 @@ If Mobbin MCP/free-tier access is available without payment, use only free searc
 │       ├── figma-component-reuse-ledger.md
 │       ├── mockup-qa-checklist.md
 │       └── frontend-reference-exports/
+├── api/
+│   ├── index.ts
 ├── frontend/
 │   ├── src/
+|   |   ├── agents/
+│   │   │   ├── context/
+│   │   │   ├── gemini/
+│   │   │   ├── memory/
+│   │   │   ├── tools/
 │   │   ├── app/
-│   │   │   ├── router.tsx
-│   │   │   ├── providers.tsx
-│   │   │   └── demo-state.ts
+│   │   │   ├── App.tsx
+│   │   │   ├── 
 │   │   ├── components/
 │   │   │   ├── primitives/
 │   │   │   ├── chrome/
@@ -245,11 +251,17 @@ If Mobbin MCP/free-tier access is available without payment, use only free searc
 │   │   │   ├── leaderboard/
 │   │   │   ├── progress/
 │   │   │   └── overlays/
-│   │   ├── pages/
-│   │   ├── data/demo/
-│   │   ├── styles/
-│   │   └── test/
+|   |   ├── data/
+|   |   ├── db/
+|   |   ├── imports/
+|   |   ├── lib/
+|   |   ├── routes/
+|   |   ├── server/
+|   |   ├── styles/
+|   |   ├── summariser/
+|   |   ├── tools/
 │   ├── public/
+│   ├── test/
 │   ├── package.json
 │   └── vite.config.ts
 ├── backend/                       # follow-up, not v0.1 implementation
