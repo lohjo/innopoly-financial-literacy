@@ -572,7 +572,7 @@ Use a TypeScript-first stack. The product needs fast UX iteration, streaming AI 
 
 ### Primary recommendation
 
-- **App framework:** Next.js, built mobile-first as a responsive web app (PWA)
+- **App framework:** React + Vite, built mobile-first as a responsive web app (PWA)
 - **UI:** Tailwind + shadcn/ui
 - **AI streaming:** Vercel AI SDK
 - **Agent loop:** Vercel AI SDK `ToolLoopAgent` or a small custom bounded loop per challenge attempt
@@ -612,7 +612,7 @@ Goal: Make the loop understandable before making it intelligent.
 
 Tasks:
 
-1. Initialize Next.js app with Tailwind and shadcn/ui, mobile-first breakpoints from the start.
+1. Initialize React + Vite app with Tailwind and shadcn/ui, mobile-first breakpoints from the start.
 2. Add a Convex project and seed one demo user profile.
 3. Create an intro screen with one sentence: "You just got paid. Let's make the first move count."
 4. Add the non-advice disclosure.

@@ -2,38 +2,54 @@
 
 :root {
   --font-size: 16px;
-  --background: #fdfdfd;
-  --foreground: #0a0a0a;
+  /* finfy-literacy — light Duolingo palette */
+  --background: #ffffff;
+  --foreground: #3c3c3c;
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
+  --card-foreground: #3c3c3c;
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #000000;
+  --popover-foreground: #3c3c3c;
+  --primary: #58cc02;
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
+  --secondary: #f7f7f7;
+  --secondary-foreground: #3c3c3c;
+  --muted: #f7f7f7;
+  --muted-foreground: #777777;
+  --accent: #ddf4ff;
+  --accent-foreground: #1899d6;
+  --destructive: #ff4b4b;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
   --input-background: #ffffff;
-  --switch-background: #e4e4e7;
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --ring: #000000;
-  --radius: 0rem;
+  --switch-background: #e5e5e5;
+  --font-weight-medium: 700;
+  --font-weight-normal: 500;
+  --ring: #58cc02;
+  --radius: 0.875rem; /* 14px squircle base */
+
+  /* finfy brand tokens */
+  --finfy-green: #58cc02;
+  --finfy-green-shadow: #58a700;
+  --finfy-blue: #1cb0f6;
+  --finfy-blue-shadow: #1899d6;
+  --finfy-orange: #ff9600;
+  --finfy-red: #ff4b4b;
+  --finfy-purple: #ce82ff;
+  --finfy-gold: #ffc800;
+  --finfy-text: #3c3c3c;
+  --finfy-muted: #777777;
+  --finfy-hairline: #e5e5e5;
+  --finfy-surface: #f7f7f7;
+
   --sidebar: #fafafa;
-  --sidebar-foreground: #18181b;
-  --sidebar-primary: #000000;
+  --sidebar-foreground: #3c3c3c;
+  --sidebar-primary: #58cc02;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f4f5;
-  --sidebar-accent-foreground: #18181b;
-  --sidebar-border: #e4e4e7;
-  --sidebar-ring: #000000;
+  --sidebar-accent: #f7f7f7;
+  --sidebar-accent-foreground: #3c3c3c;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #58cc02;
 }
 
 .dark {
@@ -114,6 +130,34 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Nunito", sans-serif;
+  }
+
+  /* finfy-literacy — accessibility globals (audit R7/R8/R9) */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  /* Dynamic numerics use tabular figures */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Reduced motion: collapse transitions/animations to <=80ms, no large moves (audit R12/R26) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 80ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /**

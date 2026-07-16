@@ -1,84 +1,213 @@
+import { ReactNode } from "react";
 import { motion } from "motion/react";
-import { Home, Swords, Trophy, User, Sparkles } from "lucide-react";
+import { GraduationCap, Trophy, Flame, User } from "lucide-react";
+import { useLocation, useNavigate } from "react-router";
 import { palette } from "./data";
 
-export type Stats = {
-  streak: number;
-  bananas: number;
-  gems: number;
-  hearts: number;
-};
+export type Stats = { points: number; streak: number; avatar: string };
 
-export type Tab = "home" | "quest" | "leaderboard" | "profile" | "buddy";
+// --- Numeric text with tabular figures (audit R7) ---
+export function Num({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <span className={`tnum ${className}`}>{children}</span>;
+}
 
-// Cute finfy mascot — a friendly raccoon in a colored ring.
-export function Mascot({ size = 48, mood = "🦝" }: { size?: number; mood?: string }) {
+// --- Shape grammar: squircle = interactive, pill = read-only ---
+export function PrimaryButton({
+  children,
+  onClick,
+  color = palette.green,
+  shadow = palette.greenShadow,
+  disabled = false,
+  type = "button",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  color?: string;
+  shadow?: string;
+  disabled?: boolean;
+  type?: "button" | "submit";
+}) {
   return (
-    <div
-      className="flex items-center justify-center rounded-full shrink-0"
+    <motion.button
+      type={type}
+      whileTap={disabled ? undefined : { scale: 0.96 }}
+      transition={{ duration: 0.12 }}
+      onClick={disabled ? undefined : onClick}
+      className="w-full select-none"
       style={{
-        width: size,
-        height: size,
-        background: "linear-gradient(160deg,#2a3d46,#1c2b33)",
-        border: `2px solid ${palette.green}`,
-        fontSize: size * 0.55,
+        height: 48,
+        borderRadius: 14,
+        background: disabled ? palette.hairline : color,
+        color: disabled ? palette.muted : "#fff",
+        boxShadow: disabled ? "none" : `0 4px 0 ${shadow}`,
+        fontWeight: 800,
+        fontSize: 15,
+        letterSpacing: 0.4,
+        textTransform: "uppercase",
+        cursor: disabled ? "not-allowed" : "pointer",
+      }}
+    >
+      {children}
+    </motion.button>
+  );
+}
+
+export function SecondaryButton({
+  children,
+  onClick,
+  color = palette.blue,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  color?: string;
+}) {
+  return (
+    <motion.button
+      whileTap={{ scale: 0.96 }}
+      transition={{ duration: 0.12 }}
+      onClick={onClick}
+      className="w-full select-none bg-white"
+      style={{
+        minHeight: 40,
+        borderRadius: 12,
+        border: `2px solid ${palette.hairline}`,
+        color,
+        fontWeight: 800,
+        fontSize: 14,
+        letterSpacing: 0.4,
+        textTransform: "uppercase",
+        padding: "0 16px",
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </motion.button>
+  );
+}
+
+// Read-only status / metadata pill (never interactive, uppercase for status)
+export function Pill({
+  children,
+  color = palette.muted,
+  bg,
+  icon,
+  status = false,
+}: {
+  children: ReactNode;
+  color?: string;
+  bg?: string;
+  icon?: ReactNode;
+  status?: boolean;
+}) {
+  return (
+    <span
+      className="inline-flex items-center gap-1"
+      style={{
+        height: 24,
+        borderRadius: 999,
+        padding: "0 10px",
+        background: bg ?? palette.surface,
+        color,
+        fontWeight: 800,
+        fontSize: 11,
+        letterSpacing: status ? 0.6 : 0.2,
+        textTransform: status ? "uppercase" : "none",
         lineHeight: 1,
       }}
     >
-      <span>{mood}</span>
-    </div>
+      {icon}
+      {children}
+    </span>
   );
 }
 
-function Counter({ emoji, value, color }: { emoji: string; value: number | string; color: string }) {
+// Shared elevation surface used by feed / leaderboard / recap / profile (audit R4)
+export function Card({
+  children,
+  className = "",
+  style,
+  onClick,
+}: {
+  children: ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: () => void;
+}) {
   return (
-    <div className="flex items-center gap-[5px]">
-      <span style={{ fontSize: 18, lineHeight: 1 }}>{emoji}</span>
-      <span style={{ color, fontWeight: 800, fontSize: 16 }}>{value}</span>
+    <div
+      onClick={onClick}
+      className={className}
+      style={{
+        background: palette.card,
+        border: `2px solid ${palette.hairline}`,
+        borderRadius: 16,
+        ...style,
+      }}
+    >
+      {children}
     </div>
   );
 }
 
+// --- Persistent top bar: points + streak + avatar ---
 export function TopBar({ stats }: { stats: Stats }) {
   return (
     <div
-      className="flex items-center justify-between px-5 py-3"
-      style={{ borderBottom: `2px solid ${palette.border}` }}
+      className="flex items-center justify-between px-4"
+      style={{ height: 52, borderBottom: `2px solid ${palette.hairline}`, background: "#fff" }}
     >
-      <Counter emoji="🔥" value={stats.streak} color={palette.orange} />
-      <Counter emoji="🍌" value={stats.bananas} color={palette.gold} />
-      <Counter emoji="💎" value={stats.gems} color={palette.blue} />
-      <Counter emoji="❤️" value={stats.hearts} color={palette.red} />
+      <div className="flex items-center gap-1.5">
+        <Flame size={22} color={palette.orange} fill={palette.orange} strokeWidth={1.5} />
+        <Num className="font-extrabold" >
+          <span style={{ color: palette.orange, fontWeight: 800, fontSize: 16 }}>{stats.streak}</span>
+        </Num>
+      </div>
+      <div className="flex items-center gap-1.5" aria-label="points">
+        <span style={{ fontSize: 18 }}>⭐</span>
+        <Num>
+          <span style={{ color: palette.gold, fontWeight: 800, fontSize: 16 }}>{stats.points.toLocaleString()}</span>
+        </Num>
+      </div>
+      <div
+        className="flex items-center justify-center rounded-full"
+        style={{ width: 34, height: 34, background: palette.surface, border: `2px solid ${palette.hairline}`, fontSize: 18 }}
+      >
+        {stats.avatar}
+      </div>
     </div>
   );
 }
 
-export function BottomNav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
-  const items: { id: Tab; label: string; icon: typeof Home }[] = [
-    { id: "home", label: "Home", icon: Home },
-    { id: "quest", label: "Quests", icon: Swords },
-    { id: "buddy", label: "Finn AI", icon: Sparkles },
-    { id: "leaderboard", label: "Ranks", icon: Trophy },
-    { id: "profile", label: "Profile", icon: User },
-  ];
+// --- Bottom navigation: Learn / Leaderboard / Progress / Profile ---
+const NAV = [
+  { to: "/learn", label: "Learn", icon: GraduationCap },
+  { to: "/leaderboard", label: "Ranks", icon: Trophy },
+  { to: "/progress", label: "Progress", icon: Flame },
+  { to: "/profile", label: "Profile", icon: User },
+];
+
+export function BottomNav() {
+  const nav = useNavigate();
+  const { pathname } = useLocation();
   return (
     <div
-      className="flex items-stretch justify-around px-1 py-2"
-      style={{ borderTop: `2px solid ${palette.border}`, background: palette.bgDeep }}
+      className="flex items-stretch justify-around"
+      style={{ borderTop: `2px solid ${palette.hairline}`, background: "#fff", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      {items.map((it) => {
-        const active = tab === it.id;
-        const Icon = it.icon;
+      {NAV.map(({ to, label, icon: Icon }) => {
+        const active = pathname.startsWith(to);
         return (
           <button
-            key={it.id}
-            onClick={() => onChange(it.id)}
-            className="flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 flex-1 transition-colors"
-            style={{ background: active ? "rgba(88,204,2,0.12)" : "transparent" }}
+            key={to}
+            onClick={() => nav(to)}
+            aria-label={label}
+            aria-current={active ? "page" : undefined}
+            className="flex flex-col items-center justify-center gap-0.5 flex-1"
+            style={{ minHeight: 56, background: active ? palette.blueSoft : "transparent" }}
           >
-            <Icon size={22} color={active ? palette.green : palette.subtext} strokeWidth={active ? 2.6 : 2} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: active ? palette.green : palette.subtext }}>
-              {it.label}
+            <Icon size={24} color={active ? palette.blue : palette.muted} strokeWidth={active ? 2.6 : 2} />
+            <span style={{ fontSize: 10, fontWeight: 800, color: active ? palette.blue : palette.muted, letterSpacing: 0.3 }}>
+              {label}
             </span>
           </button>
         );
@@ -87,39 +216,25 @@ export function BottomNav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => v
   );
 }
 
-// Chunky Duolingo-style 3D button.
-export function ChunkyButton({
-  children,
-  onClick,
-  color = palette.green,
-  shadow = palette.greenDark,
-  disabled = false,
-  textColor = "#ffffff",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  color?: string;
-  shadow?: string;
-  disabled?: boolean;
-  textColor?: string;
-}) {
+// --- Phone frame: centers a 390-wide mobile viewport on desktop ---
+export function PhoneFrame({ children }: { children: ReactNode }) {
   return (
-    <motion.button
-      whileTap={disabled ? undefined : { y: 3, boxShadow: `0 0px 0 ${shadow}` }}
-      onClick={disabled ? undefined : onClick}
-      className="w-full rounded-2xl px-6 py-3.5 select-none"
-      style={{
-        background: disabled ? palette.border : color,
-        boxShadow: disabled ? "none" : `0 4px 0 ${shadow}`,
-        color: disabled ? palette.subtext : textColor,
-        fontWeight: 800,
-        fontSize: 16,
-        letterSpacing: 0.5,
-        textTransform: "uppercase",
-        cursor: disabled ? "not-allowed" : "pointer",
-      }}
+    <div
+      className="min-h-screen w-full flex items-center justify-center"
+      style={{ background: "#e9eef2", fontFamily: "'Nunito', sans-serif" }}
     >
-      {children}
-    </motion.button>
+      <div
+        className="relative flex flex-col overflow-hidden w-full sm:w-[390px] sm:my-6 sm:rounded-[40px]"
+        style={{
+          height: "100dvh",
+          maxHeight: "844px",
+          background: palette.bg,
+          color: palette.text,
+          boxShadow: "0 24px 70px rgba(0,0,0,0.25)",
+        }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }

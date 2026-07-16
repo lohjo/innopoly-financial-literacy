@@ -1,151 +1,254 @@
-// finfy-literacy — data model for the gamified financial literacy app.
+// finfy-literacy — seeded data model for the frontend prototype.
+// Gamification is limited to POINTS + STREAK + LEADERBOARD RANK (no gems/hearts/badges).
 
 export const palette = {
-  bg: "#131f24",
-  bgDeep: "#0e181c",
-  card: "#1c2b33",
-  cardAlt: "#202f36",
-  border: "#37464f",
+  bg: "#ffffff",
+  surface: "#f7f7f7",
+  card: "#ffffff",
+  hairline: "#e5e5e5",
+  text: "#3c3c3c",
+  muted: "#777777",
   green: "#58cc02",
-  greenDark: "#46a302",
-  greenText: "#79b933",
+  greenShadow: "#58a700",
+  greenSoft: "#d7ffb8",
   blue: "#1cb0f6",
-  blueDark: "#1899d6",
-  red: "#ff4b4b",
-  gold: "#ffc800",
+  blueShadow: "#1899d6",
+  blueSoft: "#ddf4ff",
   orange: "#ff9600",
+  red: "#ff4b4b",
+  redSoft: "#ffdfe0",
   purple: "#ce82ff",
-  purpleDark: "#a568cc",
-  text: "#ffffff",
-  subtext: "#93a4ad",
+  gold: "#ffc800",
 };
 
-export type Category = {
-  id: string;
-  label: string;
-  emoji: string;
-  color: string;
-};
+export type TrackId = "budgeting" | "saving" | "investing" | "credit";
+export type Track = { id: TrackId; label: string; emoji: string; color: string };
 
-export const categories: Category[] = [
-  { id: "investing", label: "Investing", emoji: "💰", color: "#58cc02" },
-  { id: "fixed-income", label: "Fixed Income", emoji: "🏦", color: "#1cb0f6" },
-  { id: "economics", label: "Economics", emoji: "🌍", color: "#ce82ff" },
-  { id: "personal", label: "Personal Finance", emoji: "💳", color: "#ff9600" },
-  { id: "credit", label: "Credit", emoji: "📊", color: "#ff4b4b" },
+export const tracks: Track[] = [
+  { id: "budgeting", label: "Budgeting", emoji: "🧾", color: "#58cc02" },
+  { id: "saving", label: "Saving", emoji: "🐖", color: "#1cb0f6" },
+  { id: "investing", label: "Investing", emoji: "📈", color: "#ce82ff" },
+  { id: "credit", label: "Credit", emoji: "💳", color: "#ff9600" },
 ];
 
-export type Unit = {
-  id: string;
-  title: string;
-  emoji: string;
-  color: string;
-  progress: number; // 0 - 100
-  kind: "story" | "quiz" | "interactive";
-};
+export type Difficulty = "Beginner" | "Intermediate" | "Advanced";
+export type Status = "completed" | "active" | "locked";
 
-export const units: Unit[] = [
-  { id: "start", title: "Start Here", emoji: "🌱", color: "#58cc02", progress: 100, kind: "story" },
-  { id: "basics", title: "Investing Basics", emoji: "💡", color: "#58cc02", progress: 83, kind: "quiz" },
-  { id: "strategies", title: "Investing Strategies", emoji: "😎", color: "#58cc02", progress: 40, kind: "interactive" },
-  { id: "mutual", title: "Mutual Funds", emoji: "💵", color: "#46a302", progress: 4, kind: "quiz" },
-  { id: "fundamental", title: "Fundamental Analysis", emoji: "🔬", color: "#37464f", progress: 0, kind: "story" },
-  { id: "shenanigans", title: "Financial Shenanigans", emoji: "🏴‍☠️", color: "#37464f", progress: 0, kind: "quiz" },
-  { id: "compound", title: "The Magic of Compounding", emoji: "🪄", color: "#37464f", progress: 0, kind: "interactive" },
-];
-
-// --- Story / lesson content (swipe-through slides) ---
-export type Slide = { title: string; body: string };
-
-export const storySlides: Slide[] = [
-  {
-    title: "What is a Stock or an Equity Share?",
-    body: "When you buy a stock, you are buying a small piece of ownership in a company.",
-  },
-  {
-    title: "You own a slice 🍕",
-    body: "Let's say you buy one stock of Tesla Inc. This means you actually own 0.0000001% of it. Just like Elon Musk, you too own some part of Tesla! Only, you own a little less than him 😅.",
-  },
-  {
-    title: "Why do companies sell stock?",
-    body: "Companies sell shares to raise money — to build factories, hire people, or grow. In return, shareholders get a stake in the company's future profits.",
-  },
-  {
-    title: "How do you make money?",
-    body: "Two ways: the share price goes up (capital gains), or the company pays you a slice of its profit (dividends). Both reward patient, long-term owners.",
-  },
-];
-
-// --- Quiz content ---
 export type Question = {
+  concept: string; // used for missed-concept tracking
   prompt: string;
   options: string[];
   answer: number;
   explanation: string;
 };
 
-export const quizQuestions: Question[] = [
-  {
-    prompt: "What does buying a stock actually give you?",
-    options: ["A loan to the company", "Ownership in the company", "A fixed monthly payment"],
-    answer: 1,
-    explanation: "A stock (equity share) represents partial ownership in a company — not a loan.",
-  },
-  {
-    prompt: "Money a company pays shareholders from its profits is called a ______.",
-    options: ["Coupon", "Dividend", "Premium"],
-    answer: 1,
-    explanation: "Dividends are periodic payments made to shareholders from company profits.",
-  },
-  {
-    prompt: "The company gets listed on the stock exchange after ______.",
-    options: ["Rights Issue", "IPO", "FPO"],
-    answer: 1,
-    explanation: "An IPO (Initial Public Offering) is the first time a company sells shares to the public.",
-  },
-  {
-    prompt: "Which investment is generally considered the most volatile?",
-    options: ["Government bonds", "Fixed deposits", "Stocks"],
-    answer: 2,
-    explanation: "Stocks fluctuate the most in the short term, but historically reward long-term investors.",
-  },
-];
-
-// --- Story lesson (chat + image choice) ---
-export type ChatLine = { speaker: "finn" | "you"; text: string };
-export const storyChat: ChatLine[] = [
-  { speaker: "finn", text: "You just got your first paycheck 🎉 What should you do with the extra cash?" },
-  { speaker: "you", text: "Then go for stocks! Even if they fall, there's time to bounce back." },
-  { speaker: "finn", text: "But I am not okay taking a lot of risks." },
-  { speaker: "you", text: "Then invest more in bonds or fixed deposits." },
-];
-
-export const storyChoice = {
-  prompt: "Who should invest in stocks more?",
-  options: [
-    { id: "retiree", label: "Retiree", emoji: "🧓", correct: false },
-    { id: "grad", label: "Young graduate", emoji: "🧑‍💻", correct: true },
-  ],
-  explanation: "A young graduate has decades to ride out market ups and downs, so they can take more equity risk.",
+export type Challenge = {
+  id: string;
+  track: TrackId;
+  title: string;
+  difficulty: Difficulty;
+  minutes: number;
+  status: Status;
+  intro: string;
+  questions: Question[];
 };
 
-// --- Leaderboard ---
-export type Player = { name: string; xp: number; avatar: string; you?: boolean };
-export const leaderboard: Player[] = [
-  { name: "Priya", xp: 2480, avatar: "🦊" },
-  { name: "Marcus", xp: 2210, avatar: "🐼" },
-  { name: "Spongebob", xp: 1960, avatar: "🧽" },
-  { name: "You", xp: 1720, avatar: "🦝", you: true },
-  { name: "Ava", xp: 1540, avatar: "🐨" },
-  { name: "Leo", xp: 1320, avatar: "🦁" },
-  { name: "Mia", xp: 1180, avatar: "🐸" },
-  { name: "Noah", xp: 940, avatar: "🐧" },
+export const challenges: Challenge[] = [
+  {
+    id: "credit-utilization-101",
+    track: "credit",
+    title: "Credit Utilization 101",
+    difficulty: "Beginner",
+    minutes: 2,
+    status: "active",
+    intro:
+      "Your first credit card statement just arrived. In the next 2 minutes you'll learn how much of your limit you should actually use — and why it quietly moves your credit score.",
+    questions: [
+      {
+        concept: "utilization ratio",
+        prompt: "Your card limit is $1,000 and your balance is $300. What is your credit utilization?",
+        options: ["3%", "30%", "300%"],
+        answer: 1,
+        explanation: "Utilization = balance ÷ limit = 300 ÷ 1,000 = 30%.",
+      },
+      {
+        concept: "utilization ratio",
+        prompt: "Keeping utilization under which threshold is a common rule of thumb for a healthy score?",
+        options: ["Under 30%", "Under 70%", "Under 95%"],
+        answer: 0,
+        explanation: "Staying below ~30% utilization generally helps your credit score.",
+      },
+      {
+        concept: "minimum-payment trap",
+        prompt: "Paying only the minimum each month mostly covers ______.",
+        options: ["The full balance", "Interest, so the balance barely shrinks", "Nothing at all"],
+        answer: 1,
+        explanation: "Minimum payments are mostly interest — the principal lingers and costs you more over time.",
+      },
+      {
+        concept: "statement timing",
+        prompt: "Utilization is usually reported to bureaus based on your balance on the ______.",
+        options: ["Due date", "Statement closing date", "First of the year"],
+        answer: 1,
+        explanation: "Bureaus typically see the balance on your statement closing date, not the due date.",
+      },
+      {
+        concept: "utilization ratio",
+        prompt: "Which action lowers utilization fastest without hurting your score?",
+        options: ["Close an old card", "Pay down the balance before the statement closes", "Ignore it"],
+        answer: 1,
+        explanation: "Paying before the statement closes lowers the reported balance; closing a card can raise utilization.",
+      },
+      {
+        concept: "minimum-payment trap",
+        prompt: "Carrying a balance month to month mainly benefits ______.",
+        options: ["You, via rewards", "The lender, via interest", "Your credit score"],
+        answer: 1,
+        explanation: "Interest is the lender's revenue — carrying a balance costs you and doesn't boost your score.",
+      },
+    ],
+  },
+  {
+    id: "budgeting-first-paycheck",
+    track: "budgeting",
+    title: "Your First Paycheck",
+    difficulty: "Beginner",
+    minutes: 2,
+    status: "active",
+    intro: "You just got paid. Let's split that first paycheck so it works for you, not against you.",
+    questions: [
+      {
+        concept: "50/30/20 rule",
+        prompt: "In the 50/30/20 rule, what does the 20% go toward?",
+        options: ["Wants", "Needs", "Savings & debt paydown"],
+        answer: 2,
+        explanation: "50% needs, 30% wants, 20% savings & paying down debt.",
+      },
+      {
+        concept: "pay yourself first",
+        prompt: "\"Pay yourself first\" means you ______.",
+        options: ["Spend, then save what's left", "Save before you spend", "Only save bonuses"],
+        answer: 1,
+        explanation: "Move money to savings the moment you're paid, before discretionary spending.",
+      },
+      {
+        concept: "fixed vs variable",
+        prompt: "Which of these is a fixed expense?",
+        options: ["Rent", "Dining out", "Concert tickets"],
+        answer: 0,
+        explanation: "Rent is fixed and predictable; dining and entertainment are variable.",
+      },
+    ],
+  },
+  {
+    id: "emergency-fund",
+    track: "saving",
+    title: "Build an Emergency Fund",
+    difficulty: "Beginner",
+    minutes: 3,
+    status: "locked",
+    intro: "A small cushion keeps a bad week from becoming a bad year.",
+    questions: [
+      {
+        concept: "emergency fund size",
+        prompt: "A common starter emergency fund target is ______.",
+        options: ["$50", "3–6 months of expenses", "One year of salary"],
+        answer: 1,
+        explanation: "3–6 months of essential expenses is a widely used target.",
+      },
+    ],
+  },
+  {
+    id: "compounding-basics",
+    track: "investing",
+    title: "The Magic of Compounding",
+    difficulty: "Intermediate",
+    minutes: 3,
+    status: "locked",
+    intro: "Time is an investor's best friend. See why starting early beats investing more later.",
+    questions: [
+      {
+        concept: "compounding",
+        prompt: "Compounding means you earn returns on ______.",
+        options: ["Only your deposits", "Your deposits AND past returns", "Only interest rates"],
+        answer: 1,
+        explanation: "You earn returns on your contributions plus previously earned returns.",
+      },
+    ],
+  },
 ];
 
-// --- Daily quests ---
-export type Quest = { id: string; label: string; emoji: string; current: number; goal: number; reward: number };
-export const dailyQuests: Quest[] = [
-  { id: "xp", label: "Earn 40 XP", emoji: "⚡", current: 30, goal: 40, reward: 20 },
-  { id: "lessons", label: "Complete 2 lessons", emoji: "📚", current: 1, goal: 2, reward: 15 },
-  { id: "perfect", label: "Get a perfect quiz score", emoji: "🎯", current: 0, goal: 1, reward: 30 },
+// --- Leaderboard (named invited peers only) ---
+export type Player = { id: string; name: string; points: number; streak: number; avatar: string; you?: boolean };
+export const peers: Player[] = [
+  { id: "priya", name: "Priya", points: 1780, streak: 21, avatar: "🦊" },
+  { id: "marcus", name: "Marcus", points: 1750, streak: 14, avatar: "🐼" },
+  { id: "you", name: "You", points: 1680, streak: 12, avatar: "🦝", you: true },
+  { id: "ava", name: "Ava", points: 1420, streak: 9, avatar: "🐨" },
+  { id: "leo", name: "Leo", points: 1180, streak: 5, avatar: "🦁" },
 ];
+
+// --- Progress (streak history dot grid + points history) ---
+export const progress = {
+  currentStreak: 12,
+  longestStreak: 18,
+  atRisk: false,
+  // last 14 days activity (true = practiced)
+  days: [true, true, false, true, true, true, true, false, true, true, true, true, true, false],
+  pointsHistory: [
+    { label: "This week", points: 320 },
+    { label: "Last week", points: 210 },
+    { label: "2 weeks ago", points: 140 },
+  ],
+  completedCount: 5,
+};
+
+// --- Strict 4-field AI recap (deterministic generator) ---
+export type Recap = {
+  whatYouDid: string;
+  score: string;
+  nextStep: string;
+  trackPosition: string;
+  compliance: string;
+  fallback?: boolean;
+};
+
+export function buildRecap(opts: {
+  title: string;
+  correct: number;
+  total: number;
+  points: number;
+  missedConcepts: string[];
+  fallback?: boolean;
+}): Recap {
+  const { title, correct, total, points, missedConcepts, fallback } = opts;
+  const you = peers.find((p) => p.you)!;
+  const ahead = [...peers].sort((a, b) => b.points - a.points).find((p) => p.points > you.points);
+  const gap = ahead ? ahead.points - you.points : 0;
+
+  // Pick exactly one next step, grounded in a missed concept (or forward-looking on a perfect score).
+  const perfect = correct === total;
+  const topMissed = missedConcepts[0];
+  const nextStep = perfect
+    ? "Perfect run — preview “Build an Emergency Fund” next to keep the momentum going."
+    : `Review how ${topMissed} works — it's the concept you missed${
+        missedConcepts.length > 1 ? " more than once" : ""
+      }.`;
+
+  const trackPosition =
+    ahead && gap > 0
+      ? `You've completed ${progress.completedCount} challenges this week, up from 2 last week. You're ${gap} points behind ${ahead.name} — one more challenge closes the gap.`
+      : `You've completed ${progress.completedCount} challenges this week, up from 2 last week. You're leading your peer group — keep it going.`;
+
+  return {
+    whatYouDid: `You completed ${title}.`,
+    score: `${correct} of ${total} correct — ${points} points earned.`,
+    nextStep,
+    trackPosition,
+    compliance: "Checked for accuracy — this is education, not advice.",
+    fallback,
+  };
+}
+
+export const trackById = (id: TrackId) => tracks.find((t) => t.id === id)!;
+export const challengeById = (id: string) => challenges.find((c) => c.id === id);

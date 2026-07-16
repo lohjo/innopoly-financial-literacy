@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { palette, Unit } from "../components/data";
-import { TopBar, BottomNav, Tab, Stats } from "../components/Shell";
-import { ExploreScreen } from "../components/ExploreScreen";
-import { LessonContent, StoryLesson } from "../components/LessonContent";
-import { QuizScreen } from "../components/QuizScreen";
-import { InteractiveLesson } from "../components/InteractiveLesson";
-import { CompleteScreen } from "../components/CompleteScreen";
-import { LeaderboardScreen, DailyQuestScreen, ProfileScreen } from "../components/Screens";
-import { StudyBuddy } from "../components/StudyBuddy";
+import { palette, Unit } from "./components/data";
+import { TopBar, BottomNav, Tab, Stats } from "./components/Shell";
+import { ExploreScreen } from "./components/ExploreScreen";
+import { LessonContent, StoryLesson } from "./components/LessonContent";
+import { QuizScreen } from "./components/QuizScreen";
+import { InteractiveLesson } from "./components/InteractiveLesson";
+import { CompleteScreen } from "./components/CompleteScreen";
+import { LeaderboardScreen, DailyQuestScreen, ProfileScreen } from "./components/Screens";
+import { StudyBuddy } from "./components/StudyBuddy";
 
 // Lesson flow: which step of a lesson we're in.
 type Flow = null | "content" | "quiz" | "story" | "interactive" | "complete";
