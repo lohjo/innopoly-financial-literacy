@@ -100,6 +100,52 @@ describe("episodeMachine", () => {
     expect(s.done).toBe(true);
   });
 
+  it("quiz retry: re-CHOOSE resets failure to dirty, both attempts recorded", () => {
+    let s = run([
+      { t: "CONTINUE" },
+      { t: "INTERACT" },
+      { t: "CHECK", results: [{ id: "c1", pass: true }, { id: "c2", pass: true }] },
+      { t: "CONTINUE" },
+      { t: "CHOOSE", index: 0 },
+      { t: "CHECK_QUIZ" },
+    ]);
+    expect(s.status).toBe("failure");
+    s = run([{ t: "CHOOSE", index: 1 }], s);
+    expect(s.status).toBe("dirty");
+    s = run([{ t: "CHECK_QUIZ" }], s);
+    expect(s.status).toBe("success");
+    const quizEvents = s.pending.filter((e) => e.type === "quiz_answer");
+    expect(quizEvents).toHaveLength(2);
+    expect(quizEvents[0]?.payload.correct).toBe(false);
+    expect(quizEvents[1]?.payload.correct).toBe(true);
+  });
+
+  it("puzzle RETRY preserves criteria marks and fail counts", () => {
+    const s = run([
+      { t: "CONTINUE" },
+      { t: "INTERACT" },
+      { t: "CHECK", results: [{ id: "c1", pass: false }, { id: "c2", pass: true }] },
+      { t: "RETRY" },
+    ]);
+    expect(s.status).toBe("dirty");
+    expect(s.criteria).toEqual({ c1: "fail", c2: "pass" });
+    expect(s.failsByCriterion).toEqual({ c1: 1 });
+  });
+
+  it("post-success checks no-op — correctCount increments once per screen", () => {
+    let s = run([
+      { t: "CONTINUE" },
+      { t: "INTERACT" },
+      { t: "CHECK", results: [{ id: "c1", pass: true }, { id: "c2", pass: true }] },
+    ]);
+    expect(s.correctCount).toBe(1);
+    expect(run([{ t: "CHECK", results: [{ id: "c1", pass: true }, { id: "c2", pass: true }] }], s)).toBe(s);
+    s = run([{ t: "CONTINUE" }, { t: "CHOOSE", index: 1 }, { t: "CHECK_QUIZ" }], s);
+    expect(s.correctCount).toBe(2);
+    expect(run([{ t: "CHECK_QUIZ" }], s)).toBe(s);
+    expect(run([{ t: "CHOOSE", index: 0 }], s)).toBe(s);
+  });
+
   it("review mode emits review evidence", () => {
     let s = initEpisode(lesson, "review");
     s = run([{ t: "CONTINUE" }, { t: "INTERACT" }, { t: "CHECK", results: [{ id: "c1", pass: true }, { id: "c2", pass: true }] }], s);

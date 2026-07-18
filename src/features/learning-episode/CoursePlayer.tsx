@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { Check, X } from "lucide-react";
 import confetti from "canvas-confetti";
 import type { LessonDoc, PuzzleParams } from "./types";
 import { detectMisconception, episodeReducer, initEpisode, type EpisodeAction, type EpisodeState } from "./episodeMachine";
+import { CheckFrame, frameMode, type CheckFrameMode } from "./CheckFrame";
+import { lessonXp, REVIEW_XP, SCREEN_XP, sessionXp } from "./xp";
+import { dur, ease, screenEnter, spring, useMotionPrefs } from "../../motion";
 import { buildReviewLesson, lessonById } from "../../content/lessons";
 import { CHAPTERS } from "../../content/chapters";
-import { PrimaryButton, SecondaryButton, SegmentedProgress, Num } from "../../components/primitives";
+import { Pill, PrimaryButton, SecondaryButton, SegmentedProgress, Num } from "../../components/primitives";
 import { SimulationCanvas } from "../../components/financial/SimulationCanvas";
 import { PredictionPanel } from "../../components/financial/PredictionPanel";
 import { defaultAnswer, evaluatePuzzle, type SimAnswer } from "../../components/financial/evaluate";
@@ -36,7 +39,7 @@ export function CoursePlayer({ review = false }: { review?: boolean }) {
 
 function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   const nav = useNavigate();
-  const reduce = useReducedMotion();
+  const { collapse } = useMotionPrefs();
   const alreadyCompleted = useStore((s) => s.lessonsCompleted.includes(lesson.id));
 
   const [episode, rawDispatch] = useReducer(
@@ -49,6 +52,38 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   const [answers, setAnswers] = useState<Record<string, SimAnswer>>({});
   const [paramsOverride, setParamsOverride] = useState<Record<string, PuzzleParams>>({});
   const flushedRef = useRef(0);
+
+  /* --- evaluating lock: brief deterministic beat between the Check tap and the verdict --- */
+  const [evaluating, setEvaluating] = useState(false);
+  const evalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (evalTimer.current) clearTimeout(evalTimer.current); }, []);
+  const runCheck = useCallback(
+    (fn: () => void) => {
+      if (collapse) {
+        fn();
+        return;
+      }
+      setEvaluating(true);
+      evalTimer.current = setTimeout(() => {
+        setEvaluating(false);
+        fn();
+      }, 120);
+    },
+    [collapse],
+  );
+
+  /* --- +XP chip flight when correctCount ticks up (visual only; award stays in finish) --- */
+  const [chipKey, setChipKey] = useState<number | null>(null);
+  const prevCorrectRef = useRef(episode.correctCount);
+  useEffect(() => {
+    const grew = episode.correctCount > prevCorrectRef.current;
+    prevCorrectRef.current = episode.correctCount;
+    if (grew && !collapse) {
+      setChipKey(episode.correctCount);
+      const t = setTimeout(() => setChipKey(null), 900);
+      return () => clearTimeout(t);
+    }
+  }, [episode.correctCount, collapse]);
 
   const screen = lesson.screens[episode.screenIndex];
 
@@ -174,13 +209,13 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
       const concept = lesson.concepts[0];
       if (passed) {
         setStore((s) => ({ reviewsDone: { ...s.reviewsDone, [concept]: (s.reviewsDone[concept] ?? 0) + 1 } }));
-        awardXp(20);
+        awardXp(REVIEW_XP);
         unlockAchievement("first-review");
       }
       nav("/practice");
       return;
     }
-    const xp = 50 + episode.correctCount * 5;
+    const xp = lessonXp(episode.correctCount);
     awardXp(xp);
     if (!getState().lessonsCompleted.includes(lesson.id)) {
       setStore((s) => ({ lessonsCompleted: [...s.lessonsCompleted, lesson.id] }));
@@ -202,11 +237,11 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
     if (episode.done && !finishedRef.current) {
       finishedRef.current = true;
       finish();
-      if (!review && !alreadyCompleted && !reduce) {
+      if (!review && !alreadyCompleted && !collapse) {
         confetti({ particleCount: 24, spread: 70, startVelocity: 28, ticks: 90, origin: { y: 0.7 } });
       }
     }
-  }, [episode.done, finish, review, alreadyCompleted, reduce]);
+  }, [episode.done, finish, review, alreadyCompleted, collapse]);
 
   const exit = () => {
     nav(review ? "/practice" : "/journey");
@@ -215,7 +250,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   /* --- completion screen --- */
   if (episode.done) {
     const hintsUsed = episode.pending.filter((e) => e.type === "hint_used").length;
-    const xp = review ? 20 : 50 + episode.correctCount * 5;
+    const xp = review ? REVIEW_XP : lessonXp(episode.correctCount);
     return (
       <div className="flex flex-col items-center px-5 py-10 mx-auto w-full max-w-[430px] gap-5" style={{ minHeight: "100dvh" }}>
         <FinnAvatar expression="celebrating" size={84} />
@@ -243,6 +278,8 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   /* --- main player chrome --- */
   const canContinue =
     screen.kind === "intro" || screen.kind === "concept" || screen.kind === "generalize" || episode.status === "success";
+  const mode = frameMode(episode.status, evaluating);
+  const checkSuccess = (screen.kind === "puzzle" || screen.kind === "quiz") && episode.status === "success";
 
   return (
     <div className="flex flex-col mx-auto w-full max-w-[430px] md:max-w-[640px]" style={{ minHeight: "100dvh" }}>
@@ -251,21 +288,48 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
           <X size={22} color="var(--muted-foreground)" strokeWidth={2.5} />
         </button>
         <SegmentedProgress total={lesson.screens.length} current={episode.screenIndex + (canContinue ? 1 : 0)} />
+        <div className="relative shrink-0">
+          <Pill tone="brand">
+            <Num>{sessionXp(episode.correctCount)} XP</Num>
+          </Pill>
+          <AnimatePresence>
+            {chipKey !== null && (
+              <motion.span
+                key={chipKey}
+                initial={{ opacity: 0, y: 240, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={spring.chip}
+                className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none tnum"
+                style={{
+                  background: "var(--success)",
+                  color: "var(--primary-foreground)",
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  boxShadow: "var(--shadow-1)",
+                }}
+                aria-hidden
+              >
+                +{SCREEN_XP}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
       </header>
 
       <main className="flex-1 px-4 pb-40">
         <AnimatePresence mode="wait">
           <motion.div
             key={screen.id}
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            {...screenEnter(collapse)}
+            exit={{ opacity: 0, transition: { duration: dur.hover, ease: ease.exit } }}
           >
             <ScreenView
               screen={screen}
               episode={episode}
               lesson={lesson}
+              mode={mode}
               answers={answers}
               paramsOverride={paramsOverride}
               onAnswer={(id, a) => {
@@ -291,10 +355,10 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
                 </SecondaryButton>
               )}
               <PrimaryButton
-                disabled={episode.status === "idle"}
+                disabled={episode.status === "idle" || evaluating}
                 onClick={() => {
                   if (episode.status === "failure") rawDispatch({ t: "RETRY" });
-                  handleCheck();
+                  runCheck(handleCheck);
                 }}
               >
                 {episode.status === "failure" ? "Try again" : "Check"}
@@ -303,17 +367,31 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
           )}
           {screen.kind === "quiz" && episode.status !== "success" && (
             <PrimaryButton
-              disabled={episode.quizChoice === null}
+              disabled={episode.quizChoice === null || episode.status === "failure" || evaluating}
               onClick={() => {
-                if (episode.status === "failure") rawDispatch({ t: "RETRY" });
-                rawDispatch({ t: "CHECK_QUIZ" });
-                if (episode.quizChoice === screen.answer) copilotDispatch({ t: "CHECK_PASS" });
+                const correct = episode.quizChoice === screen.answer;
+                runCheck(() => {
+                  rawDispatch({ t: "CHECK_QUIZ" });
+                  if (correct) copilotDispatch({ t: "CHECK_PASS" });
+                  else setSpeech("Not it — one of these changes what the money actually does.");
+                });
               }}
             >
-              Check
+              {episode.status === "failure" ? "Try again" : "Check"}
             </PrimaryButton>
           )}
-          {canContinue && <PrimaryButton onClick={() => dispatch({ t: "CONTINUE" })}>Continue</PrimaryButton>}
+          {canContinue && (
+            <>
+              {checkSuccess && (
+                <div role="status" className="flex items-center px-1 font-extrabold text-[15px] shrink-0" style={{ color: "var(--success)" }}>
+                  Correct!
+                </div>
+              )}
+              <PrimaryButton tone={checkSuccess ? "success" : "brand"} onClick={() => dispatch({ t: "CONTINUE" })}>
+                Continue
+              </PrimaryButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -348,6 +426,7 @@ function ScreenView({
   screen,
   episode,
   lesson,
+  mode,
   answers,
   paramsOverride,
   onAnswer,
@@ -357,6 +436,7 @@ function ScreenView({
   screen: LessonDoc["screens"][number];
   episode: EpisodeState;
   lesson: LessonDoc;
+  mode: CheckFrameMode;
   answers: Record<string, SimAnswer>;
   paramsOverride: Record<string, PuzzleParams>;
   onAnswer: (screenId: string, a: SimAnswer) => void;
@@ -364,6 +444,7 @@ function ScreenView({
   copilot: CopilotState;
   highlightCriterion: string | null;
 }) {
+  const { collapse } = useMotionPrefs();
   switch (screen.kind) {
     case "intro":
       return (
@@ -408,62 +489,99 @@ function ScreenView({
       const answer = answers[screen.id] ?? defaultAnswer(puzzle);
       return (
         <div className="pt-4">
-          <SimulationCanvas
-            puzzle={puzzle}
-            answer={answer}
-            onAnswer={(a) => onAnswer(screen.id, a)}
-            status={episode.status}
-            criteria={episode.criteria}
-            criteriaDetail={episode.criteriaDetail}
-            highlightCriterion={highlightCriterion}
-          />
+          <CheckFrame mode={mode}>
+            <SimulationCanvas
+              puzzle={puzzle}
+              answer={answer}
+              onAnswer={(a) => onAnswer(screen.id, a)}
+              status={episode.status}
+              criteria={episode.criteria}
+              criteriaDetail={episode.criteriaDetail}
+              highlightCriterion={highlightCriterion}
+            />
+          </CheckFrame>
         </div>
       );
     }
-    case "quiz":
+    case "quiz": {
+      const success = episode.status === "success";
+      const showResult = success || episode.status === "failure";
       return (
-        <div className="flex flex-col gap-3 pt-4">
-          <h2 className="text-[18px]">{screen.prompt}</h2>
-          <div className="flex flex-col gap-2" role="radiogroup" aria-label={screen.prompt}>
-            {screen.options.map((opt, i) => {
-              const selected = episode.quizChoice === i;
-              const showResult = episode.status === "success" || episode.status === "failure";
-              const isAnswer = i === screen.answer;
-              const border = showResult && selected ? (isAnswer ? "var(--success)" : "var(--warning)") : selected ? "var(--brand)" : "var(--border)";
-              return (
-                <button
-                  key={i}
-                  role="radio"
-                  aria-checked={selected}
-                  disabled={episode.status === "success"}
-                  onClick={() => dispatch({ t: "CHOOSE", index: i })}
-                  className="text-left text-[14px] px-4 py-3"
+        <div className="pt-4">
+          <CheckFrame mode={mode}>
+            <div className="flex flex-col gap-3">
+              <h2 className="text-[18px]">{screen.prompt}</h2>
+              <div className="flex flex-col gap-2" role="radiogroup" aria-label={screen.prompt}>
+                {screen.options.map((opt, i) => {
+                  const selected = episode.quizChoice === i;
+                  const isAnswer = i === screen.answer;
+                  const border =
+                    success && isAnswer
+                      ? "var(--success)"
+                      : showResult && selected && !isAnswer
+                        ? "var(--warning)"
+                        : selected
+                          ? "var(--brand)"
+                          : "var(--border)";
+                  const background =
+                    success && isAnswer
+                      ? "color-mix(in srgb, var(--success) 12%, transparent)"
+                      : showResult && selected && !isAnswer
+                        ? "color-mix(in srgb, var(--warning) 10%, transparent)"
+                        : selected
+                          ? "var(--brand-soft)"
+                          : "var(--card)";
+                  const dimmed = showResult && (success ? !isAnswer : !selected);
+                  return (
+                    <button
+                      key={i}
+                      role="radio"
+                      aria-checked={selected}
+                      disabled={success}
+                      onClick={() => dispatch({ t: "CHOOSE", index: i })}
+                      className="relative text-left text-[14px] px-4 py-3"
+                      style={{
+                        borderRadius: "var(--radius-action)",
+                        border: `2px solid ${border}`,
+                        background,
+                        opacity: dimmed ? 0.55 : 1,
+                        transition: "border-color var(--dur-instant), opacity var(--dur-fast)",
+                      }}
+                    >
+                      {opt}
+                      {success && isAnswer && (
+                        <motion.span
+                          initial={collapse ? false : { scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={spring.chip}
+                          className="absolute -top-2 -right-2 inline-flex items-center justify-center rounded-full"
+                          style={{ width: 22, height: 22, background: "var(--success)", color: "var(--primary-foreground)", boxShadow: "var(--shadow-1)" }}
+                          aria-hidden
+                        >
+                          <Check size={14} strokeWidth={3} />
+                        </motion.span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {showResult && (
+                <div
+                  className="rounded-[12px] p-3 text-[14px]"
                   style={{
-                    borderRadius: "var(--radius-action)",
-                    border: `2px solid ${border}`,
-                    background: selected ? "var(--brand-soft)" : "var(--card)",
-                    transition: "border-color var(--dur-instant)",
+                    background: success ? "var(--brand-soft)" : "color-mix(in srgb, var(--warning) 10%, transparent)",
                   }}
+                  role="status"
                 >
-                  {opt}
-                </button>
-              );
-            })}
-          </div>
-          {(episode.status === "success" || episode.status === "failure") && (
-            <div
-              className="rounded-[12px] p-3 text-[14px]"
-              style={{
-                background: episode.status === "success" ? "var(--brand-soft)" : "color-mix(in srgb, var(--warning) 10%, transparent)",
-              }}
-              role="status"
-            >
-              <span className="font-bold">{episode.status === "success" ? "Right. " : "Not yet. "}</span>
-              {episode.status === "success" ? screen.explanation : "Look again — what does the money actually do?"}
+                  <span className="font-bold">{success ? "Right. " : "Not yet. "}</span>
+                  {success ? screen.explanation : "Take another look and pick again."}
+                </div>
+              )}
             </div>
-          )}
+          </CheckFrame>
         </div>
       );
+    }
     case "reflect":
       return (
         <div className="flex flex-col gap-3 pt-4">

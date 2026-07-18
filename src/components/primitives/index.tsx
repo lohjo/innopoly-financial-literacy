@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { motion } from "motion/react";
 import { Check, X } from "lucide-react";
+import { dur, useMotionPrefs } from "../../motion";
 
 /* Shape grammar (design-system-2026-07-15): squircle = tap, pill = read-only. */
 
@@ -20,7 +21,7 @@ export function PrimaryButton({
   onClick?: () => void;
   disabled?: boolean;
   type?: "button" | "submit";
-  tone?: "brand" | "video";
+  tone?: "brand" | "video" | "success";
   className?: string;
 }) {
   return (
@@ -34,7 +35,7 @@ export function PrimaryButton({
       style={{
         height: 48,
         borderRadius: "var(--radius-action)",
-        background: disabled ? "var(--muted)" : tone === "video" ? "var(--video)" : "var(--brand)",
+        background: disabled ? "var(--muted)" : tone === "video" ? "var(--video)" : tone === "success" ? "var(--success)" : "var(--brand)",
         color: disabled ? "var(--muted-foreground)" : "var(--primary-foreground)",
         boxShadow: disabled ? "none" : "var(--shadow-1)",
         cursor: disabled ? "not-allowed" : "pointer",
@@ -170,16 +171,27 @@ export function SegmentedProgress({ total, current }: { total: number; current: 
 
 export type CriterionState = "pending" | "pass" | "fail";
 
-/** Visible success criteria (brilliant-replicate "visible contract"). */
+/** Visible success criteria (brilliant-replicate "visible contract").
+    celebrate: stagger-flips the rows on pass (skipped under reduced motion). */
 export function CriteriaList({
   items,
+  celebrate = false,
 }: {
   items: { id: string; label: string; state: CriterionState; detail?: string }[];
+  celebrate?: boolean;
 }) {
+  const { collapse } = useMotionPrefs();
+  const flip = celebrate && !collapse;
   return (
     <ul className="flex flex-col gap-1.5" aria-label="Success criteria">
-      {items.map((c) => (
-        <li key={c.id} className="flex items-start gap-2 text-[14px]" data-criterion={c.id}>
+      {items.map((c, i) => (
+        <motion.li
+          key={c.id}
+          className="flex items-start gap-2 text-[14px]"
+          data-criterion={c.id}
+          animate={flip ? { rotateX: [0, -80, 0] } : undefined}
+          transition={flip ? { delay: i * 0.06, duration: dur.card } : undefined}
+        >
           <span
             className="mt-0.5 inline-flex items-center justify-center rounded-full shrink-0"
             style={{
@@ -206,7 +218,7 @@ export function CriteriaList({
             ) : null}
             <span className="sr-only">{c.state === "pass" ? " — passed" : c.state === "fail" ? " — not yet" : ""}</span>
           </span>
-        </li>
+        </motion.li>
       ))}
     </ul>
   );
