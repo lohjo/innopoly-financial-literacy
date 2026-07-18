@@ -7,7 +7,7 @@ import { DebtSimulator } from "./DebtSimulator";
 import type { SimAnswer } from "./evaluate";
 
 /** Shared puzzle shell: prompt, visible criteria contract, mechanic canvas.
-    Surface-wide affect (brilliant-replicate V-pattern): frame turns amber on "not yet", green on pass. */
+    Surface-wide affect lives on the wrapping CheckFrame (learning-episode), not here. */
 export function SimulationCanvas({
   puzzle,
   answer,
@@ -25,12 +25,6 @@ export function SimulationCanvas({
   criteriaDetail: Record<string, string>;
   highlightCriterion?: string | null;
 }) {
-  const frame =
-    status === "success"
-      ? "var(--success)"
-      : status === "failure"
-        ? "var(--warning)"
-        : "var(--border)";
   const p = puzzle.params;
 
   return (
@@ -51,6 +45,7 @@ export function SimulationCanvas({
         }}
       >
         <CriteriaList
+          celebrate={status === "success"}
           items={puzzle.criteria.map((c) => ({
             id: c.id,
             label: c.label,
@@ -63,9 +58,8 @@ export function SimulationCanvas({
       <div
         className="rounded-[var(--radius-card)] p-4"
         style={{
-          border: `2px solid ${frame}`,
+          border: "2px solid var(--border)",
           background: "var(--card)",
-          transition: "border-color var(--dur-standard) var(--ease-state)",
         }}
       >
         {p.mechanic === "flow" && answer.mechanic === "flow" && (

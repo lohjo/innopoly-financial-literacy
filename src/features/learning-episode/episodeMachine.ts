@@ -90,7 +90,7 @@ export function episodeReducer(state: EpisodeState, action: EpisodeAction, lesso
     }
 
     case "CHECK": {
-      if (screen.kind !== "puzzle") return state;
+      if (screen.kind !== "puzzle" || state.status === "success") return state;
       const allPass = action.results.every((r) => r.pass);
       const criteria = { ...state.criteria };
       const criteriaDetail = { ...state.criteriaDetail };
@@ -165,7 +165,7 @@ export function episodeReducer(state: EpisodeState, action: EpisodeAction, lesso
     }
 
     case "CHECK_QUIZ": {
-      if (screen.kind !== "quiz" || state.quizChoice === null) return state;
+      if (screen.kind !== "quiz" || state.quizChoice === null || state.status === "success") return state;
       const correct = state.quizChoice === screen.answer;
       const evidence: PendingEvidence = {
         lessonId: lesson.id,
