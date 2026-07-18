@@ -1,0 +1,205 @@
+import type { ScenarioSpec } from "../../features/video-coach/types";
+
+export const offerClarification: ScenarioSpec = {
+  id: "offer-clarification",
+  title: "The Verbal Offer",
+  jurisdiction: "SG",
+  role: {
+    name: "Priya",
+    descriptor: "In-house recruiter, upbeat, wants a fast verbal yes",
+    goal: "Get you to accept '$3.7k' on the phone before you see anything in writing",
+  },
+  learnerGoal: "Turn a vague verbal offer into a written total-compensation picture — base, CPF, bonus, benefits — before saying yes.",
+  concepts: ["gross-vs-net", "cpf-contribution"],
+  facts: [
+    "Employer CPF (17%) is paid on top of your base — it's part of total compensation",
+    "AWS ('13th month') and variable bonus differ by company and are not guaranteed unless written",
+    "Asking for an offer in writing is normal and expected — no reasonable employer withdraws over it",
+  ],
+  successCriteria: [
+    "Ask whether the figure is base or total compensation",
+    "Ask for the offer in writing before accepting",
+    "Clarify CPF, bonus/AWS, and leave/benefits — the parts that don't show in take-home",
+  ],
+  entryNodeId: "o1",
+  relatedLessonId: "missing-740",
+  nodes: [
+    {
+      id: "o1",
+      say: "Great news — the team loved you! We'd like to offer you $3,700 a month. We're really excited. Can I get a yes so we can start paperwork? 🎉",
+      coachHint: "'$3,700' is one number out of at least four that matter: base, employer CPF, bonus/AWS, benefits. Nothing is real until it's written.",
+      strategies: [
+        "Clarify the structure first: is $3.7k base, and what sits on top — CPF, AWS, bonus?",
+        "Show enthusiasm AND ask for the written offer — they're not in tension.",
+      ],
+      choices: [
+        {
+          id: "a",
+          label: "That's exciting! Is $3,700 the base — and what's the full picture: employer CPF, AWS, bonus, benefits?",
+          keywords: ["base", "full picture", "cpf", "aws", "bonus", "total comp"],
+          next: "o2-structure",
+          quality: "strong",
+          moves: [{ dimension: "information", label: "Asked whether the number is base or total compensation" }],
+        },
+        {
+          id: "b",
+          label: "Yes!! I accept!",
+          keywords: ["i accept", "yes!!"],
+          next: "o2-accepted",
+          quality: "weak",
+          moves: [{ dimension: "decision", label: "Accepted a single verbal number" }],
+        },
+        {
+          id: "c",
+          label: "Thank you! Could you send the offer in writing so I can review it properly?",
+          keywords: ["in writing", "written offer", "send the offer"],
+          next: "o2-writing",
+          quality: "strong",
+          moves: [{ dimension: "information", label: "Requested written terms before deciding" }],
+        },
+      ],
+    },
+    {
+      id: "o2-structure",
+      say: "Oh! Um, $3,700 is the base, yes. CPF is the standard thing lah, everyone gets that. Bonus is... performance-based. So — shall I say it's a yes?",
+      coachHint: "'Standard lah' and 'performance-based' are non-answers. Employer CPF is 17% on top — $629/month of real compensation. AWS may or may not exist here.",
+      strategies: [
+        "Pin the specifics: is there AWS? What did the bonus actually pay last year?",
+        "Move it to writing — vague verbal answers become precise when typed.",
+      ],
+      choices: [
+        {
+          id: "a",
+          label: "Is there AWS, and what did the bonus actually pay out last year? Happy to see it all in the written offer.",
+          keywords: ["aws", "last year", "pay out", "written"],
+          next: "o3-details",
+          quality: "strong",
+          moves: [
+            { dimension: "information", label: "Converted vague benefits into checkable specifics" },
+            { dimension: "reasoning", label: "Evaluated the offer as total compensation" },
+          ],
+        },
+        {
+          id: "b",
+          label: "Standard CPF is fine — okay, I'm in!",
+          keywords: ["standard is fine", "i'm in", "im in"],
+          next: "o2-accepted",
+          quality: "weak",
+          moves: [{ dimension: "decision", label: "Accepted with the bonus and AWS still undefined" }],
+        },
+        {
+          id: "c",
+          label: "Just to note — employer CPF is 17% on top, right? That's part of how I'm comparing offers.",
+          keywords: ["17%", "employer cpf", "on top"],
+          next: "o3-details",
+          quality: "strong",
+          moves: [{ dimension: "reasoning", label: "Priced employer CPF into the comparison" }],
+        },
+      ],
+    },
+    {
+      id: "o2-accepted",
+      say: "Amazing!! Welcome aboard! I'll whatsapp you the start date. The offer letter will come... at some point this week, don't worry about it!",
+      coachHint: "You can still anchor this: 'my acceptance is confirmed once I've read the letter.' It protects you and costs nothing.",
+      strategies: [
+        "Make acceptance conditional on the letter matching the call — say it warmly, in one line.",
+        "Ask them to include base, CPF, AWS, bonus and leave explicitly in the letter.",
+      ],
+      choices: [
+        {
+          id: "a",
+          label: "To keep us both safe — I'll confirm once the letter's in and matches what we discussed. Can it list base, AWS, bonus and leave?",
+          keywords: ["confirm once", "letter", "matches", "list"],
+          next: "end:goal_met",
+          quality: "strong",
+          moves: [
+            { dimension: "decision", label: "Made acceptance conditional on written terms" },
+            { dimension: "communication", label: "Asked for specifics without souring the tone" },
+          ],
+        },
+        {
+          id: "b",
+          label: "No worries, whenever! See you on day one!",
+          keywords: ["no worries", "whenever", "see you"],
+          next: "end:impasse",
+          quality: "weak",
+          moves: [{ dimension: "decision", label: "Started a job with no written terms reviewed" }],
+        },
+      ],
+    },
+    {
+      id: "o2-writing",
+      say: "Of course, of course... though honestly the team wants this locked today — there are other candidates, you know? A verbal yes now would really help your case. 😅",
+      pressure: "urgency",
+      coachHint: "'Other candidates' is the recruiter's version of 'price goes up at midnight.' A company that rescinds because you read the offer told you something important.",
+      strategies: [
+        "Hold politely: strong interest, decision follows the written offer, fast turnaround promised.",
+        "Test the pressure: ask directly if the offer is contingent on not reading it.",
+      ],
+      choices: [
+        {
+          id: "a",
+          label: "I'm seriously interested — and I decide on written offers. Send it today and you'll have my answer within 24 hours.",
+          keywords: ["written offers", "24 hours", "send it today"],
+          next: "o3-details",
+          quality: "strong",
+          moves: [
+            { dimension: "resilience", label: "Held the written-offer line under scarcity pressure" },
+            { dimension: "communication", label: "Paired the boundary with a concrete commitment" },
+          ],
+        },
+        {
+          id: "b",
+          label: "Oh no — okay okay, verbal yes then! Don't give it away!",
+          keywords: ["verbal yes", "don't give", "dont give"],
+          next: "o2-accepted",
+          quality: "weak",
+          moves: [{ dimension: "resilience", label: "Scarcity framing extracted the yes" }],
+        },
+        {
+          id: "c",
+          label: "Is the offer contingent on me not reading it first?",
+          keywords: ["contingent", "not reading"],
+          next: "o3-details",
+          quality: "ok",
+          moves: [{ dimension: "resilience", label: "Named the pressure tactic directly" }],
+        },
+      ],
+    },
+    {
+      id: "o3-details",
+      say: "Okay so: base $3,700, AWS yes, bonus paid about one month last year but no promises, 14 days leave, standard CPF. I'll email the letter this afternoon. Anything else, or can I tell the team it's looking good? 😊",
+      coachHint: "You now have the real shape: ~$3,700×13 + ~1 month bonus + $629/month employer CPF. This is what comparing offers actually looks like.",
+      strategies: [
+        "Close warmly with the process stated: letter first, answer within a day.",
+        "Do the total-comp math out loud to confirm you've understood the package.",
+      ],
+      choices: [
+        {
+          id: "a",
+          label: "Tell them it's looking very good. Once the letter lands I'll confirm within 24 hours.",
+          keywords: ["looking very good", "confirm within", "letter lands"],
+          next: "end:goal_met",
+          quality: "strong",
+          moves: [{ dimension: "decision", label: "Kept warmth and the written-first process together" }],
+        },
+        {
+          id: "b",
+          label: "So roughly $3.7k × 13 plus ~1 month bonus, plus 17% employer CPF — that's the package I'm comparing. Sounds right?",
+          keywords: ["x 13", "times 13", "17%", "package"],
+          next: "end:goal_met",
+          quality: "strong",
+          moves: [{ dimension: "reasoning", label: "Reconstructed total compensation from the parts" }],
+        },
+        {
+          id: "c",
+          label: "All good — verbal yes, letter's a formality!",
+          keywords: ["formality", "verbal yes"],
+          next: "end:impasse",
+          quality: "weak",
+          moves: [{ dimension: "decision", label: "Treated unread terms as a formality" }],
+        },
+      ],
+    },
+  ],
+};

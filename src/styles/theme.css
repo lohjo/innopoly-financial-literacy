@@ -2,84 +2,122 @@
 
 :root {
   --font-size: 16px;
-  /* finfy-literacy — light Duolingo palette */
-  --background: #ffffff;
-  --foreground: #3c3c3c;
+  /* finfy — jade + ink + warm paper (spec 2026-07-18 §7.2) */
+  --background: #f7f8f3;
+  --foreground: #17211d;
   --card: #ffffff;
-  --card-foreground: #3c3c3c;
+  --card-foreground: #17211d;
   --popover: #ffffff;
-  --popover-foreground: #3c3c3c;
-  --primary: #58cc02;
+  --popover-foreground: #17211d;
+  --primary: #087e64;
   --primary-foreground: #ffffff;
-  --secondary: #f7f7f7;
-  --secondary-foreground: #3c3c3c;
-  --muted: #f7f7f7;
-  --muted-foreground: #777777;
-  --accent: #ddf4ff;
-  --accent-foreground: #1899d6;
-  --destructive: #ff4b4b;
+  --secondary: #eef1ea;
+  --secondary-foreground: #17211d;
+  --muted: #eef1ea;
+  --muted-foreground: #5c6962;
+  --accent: #ddf3ea;
+  --accent-foreground: #066b55;
+  --destructive: #b3261e;
   --destructive-foreground: #ffffff;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
+  --border: #d9e0da;
+  --input: #d9e0da;
   --input-background: #ffffff;
-  --switch-background: #e5e5e5;
-  --font-weight-medium: 700;
-  --font-weight-normal: 500;
-  --ring: #58cc02;
-  --radius: 0.875rem; /* 14px squircle base */
+  --switch-background: #d9e0da;
+  --font-weight-medium: 600;
+  --font-weight-normal: 400;
+  --ring: #2368d8;
+  --radius: 0.875rem; /* 14px action squircle base */
 
-  /* finfy brand tokens */
-  --finfy-green: #58cc02;
-  --finfy-green-shadow: #58a700;
-  --finfy-blue: #1cb0f6;
-  --finfy-blue-shadow: #1899d6;
-  --finfy-orange: #ff9600;
-  --finfy-red: #ff4b4b;
-  --finfy-purple: #ce82ff;
-  --finfy-gold: #ffc800;
-  --finfy-text: #3c3c3c;
-  --finfy-muted: #777777;
-  --finfy-hairline: #e5e5e5;
-  --finfy-surface: #f7f7f7;
+  /* spec brand tokens */
+  --surface-raised: #fcfdf9;
+  --brand: #087e64;
+  --brand-hover: #066b55;
+  --brand-soft: #ddf3ea;
+  --focus: #2368d8;
+  --info: #2368d8;
+  --success: #157a4b;
+  --warning: #9a5a00;
+  --error: #b3261e;
+  --purple: #6c4ec7;
+  --video: #5b4bc4;
 
-  --sidebar: #fafafa;
-  --sidebar-foreground: #3c3c3c;
-  --sidebar-primary: #58cc02;
+  /* radii grammar: squircle = action, pill = read-only (design-system-2026-07-15) */
+  --radius-action: 14px;
+  --radius-card: 20px;
+  --radius-sheet: 24px;
+
+  /* elevation (spec §7.3) */
+  --shadow-1: 0 2px 8px rgb(23 33 29 / 0.08);
+  --shadow-2: 0 8px 24px rgb(23 33 29 / 0.12);
+  --shadow-3: 0 24px 64px rgb(23 33 29 / 0.18);
+
+  /* motion tokens (spec §8.1) */
+  --dur-instant: 80ms;
+  --dur-fast: 140ms;
+  --dur-standard: 220ms;
+  --dur-deliberate: 360ms;
+  --dur-expressive: 520ms;
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-state: cubic-bezier(0.2, 0, 0, 1);
+
+  --sidebar: #fcfdf9;
+  --sidebar-foreground: #17211d;
+  --sidebar-primary: #087e64;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f7f7f7;
-  --sidebar-accent-foreground: #3c3c3c;
-  --sidebar-border: #e5e5e5;
-  --sidebar-ring: #58cc02;
+  --sidebar-accent: #eef1ea;
+  --sidebar-accent-foreground: #17211d;
+  --sidebar-border: #d9e0da;
+  --sidebar-ring: #087e64;
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #fafafa;
-  --card: #09090b;
-  --card-foreground: #fafafa;
-  --popover: #09090b;
-  --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #18181b;
-  --secondary: #27272a;
-  --secondary-foreground: #fafafa;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --accent: #27272a;
-  --accent-foreground: #fafafa;
-  --destructive: #7f1d1d;
-  --destructive-foreground: #fafafa;
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #d4d4d8;
-  --sidebar: #09090b;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #fafafa;
-  --sidebar-primary-foreground: #18181b;
-  --sidebar-accent: #27272a;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #27272a;
-  --sidebar-ring: #d4d4d8;
+  --background: #0d1512;
+  --foreground: #f3f7f4;
+  --card: #14201b;
+  --card-foreground: #f3f7f4;
+  --popover: #14201b;
+  --popover-foreground: #f3f7f4;
+  --primary: #54d6ad;
+  --primary-foreground: #0d1512;
+  --secondary: #192720;
+  --secondary-foreground: #f3f7f4;
+  --muted: #192720;
+  --muted-foreground: #b4c0b8;
+  --accent: #173c32;
+  --accent-foreground: #75e3be;
+  --destructive: #ffb4ab;
+  --destructive-foreground: #0d1512;
+  --border: #33443b;
+  --input: #33443b;
+  --input-background: #14201b;
+  --switch-background: #33443b;
+  --ring: #8db7ff;
+
+  --surface-raised: #192720;
+  --brand: #54d6ad;
+  --brand-hover: #75e3be;
+  --brand-soft: #173c32;
+  --focus: #8db7ff;
+  --info: #8db7ff;
+  --success: #63d39a;
+  --warning: #f2b45f;
+  --error: #ffb4ab;
+  --purple: #c8b9ff;
+  --video: #bdb1ff;
+
+  --shadow-1: 0 2px 8px rgb(0 0 0 / 0.4);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.5);
+  --shadow-3: 0 24px 64px rgb(0 0 0 / 0.6);
+
+  --sidebar: #14201b;
+  --sidebar-foreground: #f3f7f4;
+  --sidebar-primary: #54d6ad;
+  --sidebar-primary-foreground: #0d1512;
+  --sidebar-accent: #192720;
+  --sidebar-accent-foreground: #f3f7f4;
+  --sidebar-border: #33443b;
+  --sidebar-ring: #54d6ad;
 }
 
 @theme inline {
@@ -104,15 +142,30 @@
   --color-input-background: var(--input-background);
   --color-switch-background: var(--switch-background);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+
+  --color-surface-raised: var(--surface-raised);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-info: var(--info);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-purple: var(--purple);
+  --color-video: var(--video);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-action: var(--radius-action);
+  --radius-card: var(--radius-card);
+  --radius-sheet: var(--radius-sheet);
+
+  --shadow-e1: var(--shadow-1);
+  --shadow-e2: var(--shadow-2);
+  --shadow-e3: var(--shadow-3);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -130,10 +183,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: "Nunito", sans-serif;
+    font-family: "Nunito Sans", "Nunito", ui-rounded, system-ui, sans-serif;
   }
 
-  /* finfy-literacy — accessibility globals (audit R7/R8/R9) */
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -144,13 +196,19 @@
   p {
     text-wrap: pretty;
   }
-  /* Dynamic numerics use tabular figures */
+  /* Financial numerics: tabular figures (spec §7.3) */
   .tnum {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
   }
 
-  /* Reduced motion: collapse transitions/animations to <=80ms, no large moves (audit R12/R26) */
+  /* Visible focus (spec §7.6): 3px ring, 2px offset */
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* Reduced motion: collapse to <=80ms opacity-level changes (spec §7.6) */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;
@@ -160,36 +218,31 @@
     }
   }
 
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
-
   html {
     font-size: var(--font-size);
   }
 
   h1 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-size: 1.75rem; /* 28/34 */
+    font-weight: 700;
+    line-height: 1.22;
   }
 
   h2 {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-size: 1.375rem; /* 22/30 */
+    font-weight: 700;
+    line-height: 1.36;
   }
 
   h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+    font-size: 1.125rem; /* 18/26 */
+    font-weight: 700;
+    line-height: 1.44;
   }
 
   h4 {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
+    font-size: 1rem; /* 16/24 */
+    font-weight: 700;
     line-height: 1.5;
   }
 
