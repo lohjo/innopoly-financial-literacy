@@ -234,7 +234,7 @@ export type LessonDoc = {
   screens: ScreenDoc[];
   /** authored hints per puzzle screen id: [H1 nudge, H2 point, H3 misconception, H4 one-step] */
   hints: Record<string, [string, string, string, string]>;
-  /** H2 "point" target: criterion id to highlight, per puzzle screen id */
+  /** H2 "point" target per screen id: a criterion id (puzzles) or "opt-N" (quiz options) */
   hintTargets?: Record<string, string>;
   misconceptions: MisconceptionCard[];
   /** conversation rehearsal offered after completion */

@@ -75,5 +75,7 @@ export const missing740: LessonDoc = {
     },
   ],
   hints: {},
+  // tutor "point" targets for the quiz beats (no puzzle screens in this lesson)
+  hintTargets: { "quiz-where": "opt-1", "quiz-lost": "opt-2" },
   misconceptions: [],
 };
