@@ -58,6 +58,7 @@ export function SimulationCanvas({
         >
           <CriteriaList
             celebrate={status === "success"}
+            highlightId={highlightCriterion ?? null}
             items={puzzle.criteria.map((c) => ({
               id: c.id,
               label: c.label,

@@ -17,6 +17,7 @@ import { ObserveCanvas } from "../../components/financial/ObserveCanvas";
 import { PredictionPanel } from "../../components/financial/PredictionPanel";
 import { defaultAnswer, evaluatePuzzle, type SimAnswer } from "../../components/financial/evaluate";
 import { copilotReducer, initCopilot, praiseLine, STALL_MS, type CopilotState } from "../copilot/copilotMachine";
+import { executeToolCommand, type CopilotToolCommand, type TutorAnnotation } from "../copilot/toolExecutor";
 import { StudyCopilot } from "../copilot/StudyCopilot";
 import { FinnAvatar } from "../copilot/FinnAvatar";
 import { getState, recordEvidence, awardXp, touchStreak, setState as setStore, unlockAchievement, useStore } from "../../stores/store";
@@ -198,6 +199,27 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
     [rawDispatch],
   );
 
+  /* --- tutor tool seam: every UI command (mock today, live later) runs through one executor --- */
+  const [tutorHighlight, setTutorHighlight] = useState<string | null>(null);
+  const [tutorAnnotation, setTutorAnnotation] = useState<TutorAnnotation | null>(null);
+  const runTool = useCallback(
+    (cmd: CopilotToolCommand) =>
+      executeToolCommand(cmd, {
+        setHighlight: setTutorHighlight,
+        setAnnotation: setTutorAnnotation,
+        openHint,
+        setSpeech,
+      }),
+    [openHint],
+  );
+
+  /* H2 ("point to what matters") highlights the authored target for this screen */
+  useEffect(() => {
+    const target = copilot.s === "hinting" && copilot.level === 2 ? (lesson.hintTargets?.[screen.id] ?? null) : null;
+    if (target) runTool({ type: "highlight_element", targetId: target });
+    else runTool({ type: "clear" });
+  }, [copilot, screen?.id, lesson, runTool]);
+
   const hintDone = useCallback(() => {
     // H4 walkthrough ends with a changed-value retry (spec §2.4): swap in retryParams
     if (copilot.s === "hinting" && copilot.level === 4 && screen?.kind === "puzzle" && screen.puzzle.retryParams) {
@@ -363,7 +385,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
               }}
               dispatch={dispatch}
               copilot={copilot}
-              highlightCriterion={copilot.s === "hinting" && copilot.level === 2 ? (lesson.hintTargets?.[screen.id] ?? null) : null}
+              highlightCriterion={tutorHighlight}
             />
           </motion.div>
         </AnimatePresence>
@@ -568,14 +590,17 @@ function ScreenView({
                 {screen.options.map((opt, i) => {
                   const selected = episode.quizChoice === i;
                   const isAnswer = i === screen.answer;
+                  const highlighted = highlightCriterion === `opt-${i}`;
                   const border =
                     success && isAnswer
                       ? "var(--success)"
                       : showResult && selected && !isAnswer
                         ? "var(--warning)"
-                        : selected
-                          ? "var(--brand)"
-                          : "var(--border)";
+                        : highlighted
+                          ? "var(--info)"
+                          : selected
+                            ? "var(--brand)"
+                            : "var(--border)";
                   const background =
                     success && isAnswer
                       ? "color-mix(in srgb, var(--success) 12%, transparent)"
@@ -592,13 +617,15 @@ function ScreenView({
                       aria-checked={selected}
                       disabled={success}
                       onClick={() => dispatch({ t: "CHOOSE", index: i })}
+                      data-tutor-target={`opt-${i}`}
                       className="relative text-left text-[14px] px-4 py-3"
                       style={{
                         borderRadius: "var(--radius-action)",
                         border: `2px solid ${border}`,
                         background,
                         opacity: dimmed ? 0.55 : 1,
-                        transition: "border-color var(--dur-instant), opacity var(--dur-fast)",
+                        boxShadow: highlighted ? "0 0 0 3px color-mix(in srgb, var(--info) 25%, transparent)" : undefined,
+                        transition: "border-color var(--dur-instant), opacity var(--dur-fast), box-shadow var(--dur-fast)",
                       }}
                     >
                       {opt}
