@@ -4,8 +4,20 @@ import { missing740 } from "./ch0-missing-740";
 import { fixedVsFlexible } from "./ch1-fixed-vs-flexible";
 import { shockMonth } from "./ch1-shock-month";
 import { minimumPaymentTrap } from "./ch1-minimum-payment-trap";
+import { interestMultiplier } from "./ch-lab-interest-multiplier";
+import { oneBasket } from "./ch-lab-one-basket";
+import { beatTheMarket } from "./ch-lab-beat-the-market";
 
-export const LESSONS: LessonDoc[] = [nightItLands, missing740, fixedVsFlexible, shockMonth, minimumPaymentTrap];
+export const LESSONS: LessonDoc[] = [
+  nightItLands,
+  missing740,
+  fixedVsFlexible,
+  shockMonth,
+  minimumPaymentTrap,
+  interestMultiplier,
+  oneBasket,
+  beatTheMarket,
+];
 
 export const lessonById = (id: string): LessonDoc | undefined => LESSONS.find((l) => l.id === id);
 

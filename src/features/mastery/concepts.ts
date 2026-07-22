@@ -66,6 +66,34 @@ export const CONCEPTS: ConceptNode[] = [
     prerequisites: ["minimum-payment"],
     chapterId: "ch1",
   },
+  {
+    id: "interest-multiplier",
+    label: "Interest as a multiplier",
+    meaning: "Interest multiplies whatever balance you feed it — debt or savings — over time.",
+    prerequisites: ["pay-yourself-first"],
+    chapterId: "ch-lab",
+  },
+  {
+    id: "wait-cost",
+    label: "The cost of waiting",
+    meaning: "Delaying a save-first route usually feeds interest nothing — the gap shows up when you scrub the years.",
+    prerequisites: ["interest-multiplier"],
+    chapterId: "ch-lab",
+  },
+  {
+    id: "diversification",
+    label: "Diversification",
+    meaning: "Spreading money across investments reduces how much one bad outcome can hurt the whole portfolio.",
+    prerequisites: [],
+    chapterId: "ch-lab",
+  },
+  {
+    id: "dollar-cost-averaging",
+    label: "Dollar-cost averaging",
+    meaning: "Investing a fixed amount on a schedule buys at many prices — so you don't have to time the perfect day.",
+    prerequisites: [],
+    chapterId: "ch-lab",
+  },
 ];
 
 export const conceptById = (id: ConceptId): ConceptNode | undefined => CONCEPTS.find((c) => c.id === id);

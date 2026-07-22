@@ -1,7 +1,18 @@
 import type { ChapterDoc } from "../features/learning-episode/types";
 
-/* Course map (brilliant-replicate §course-map, wedge slice: Ch0 + Ch1). */
+/* Course map (brilliant-replicate §course-map, wedge slice: Discovery Lab POC + Ch0 + Ch1).
+   Discovery Lab is catalogued first so the experimental lesson is immediately reachable for format comparison. */
 export const CHAPTERS: ChapterDoc[] = [
+  {
+    id: "ch-lab",
+    title: "Discovery Lab",
+    tagline: "Experimental Brilliant-style lesson — compare this against the chapter path below.",
+    lessons: [
+      { id: "interest-multiplier", title: "The Interest Multiplier", minutes: 5 },
+      { id: "one-basket", title: "One Basket?", minutes: 2 },
+      { id: "beat-the-market", title: "Can You Beat the Market?", minutes: 3 },
+    ],
+  },
   {
     id: "ch0",
     title: "The Night It Lands",
