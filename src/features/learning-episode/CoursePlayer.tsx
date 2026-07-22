@@ -11,6 +11,7 @@ import { dur, ease, screenEnter, spring, useMotionPrefs } from "../../motion";
 import { buildReviewLesson, lessonById } from "../../content/lessons";
 import { CHAPTERS } from "../../content/chapters";
 import { Pill, PrimaryButton, SecondaryButton, SegmentedProgress, Num } from "../../components/primitives";
+import { BottomSheet } from "../../components/primitives/BottomSheet";
 import { SimulationCanvas } from "../../components/financial/SimulationCanvas";
 import { ObserveCanvas } from "../../components/financial/ObserveCanvas";
 import { PredictionPanel } from "../../components/financial/PredictionPanel";
@@ -261,6 +262,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   const exit = () => {
     nav(review ? "/practice" : "/journey");
   };
+  const [exitConfirm, setExitConfirm] = useState(false);
 
   /* --- completion screen --- */
   if (episode.done) {
@@ -307,7 +309,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   return (
     <div className="flex flex-col mx-auto w-full max-w-[430px] md:max-w-[640px]" style={{ minHeight: "100dvh" }}>
       <header className="flex items-center gap-3 px-4 py-3">
-        <button onClick={exit} aria-label="Exit lesson" className="p-2 -m-2">
+        <button onClick={() => setExitConfirm(true)} aria-label="Exit lesson" className="p-2 -m-2">
           <X size={22} color="var(--muted-foreground)" strokeWidth={2.5} />
         </button>
         <SegmentedProgress total={lesson.screens.length} current={episode.screenIndex + (canContinue ? 1 : 0)} />
@@ -417,6 +419,18 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
           )}
         </div>
       </div>
+
+      {/* exit confirmation — leaving mid-screen loses that screen's progress */}
+      <BottomSheet open={exitConfirm} onClose={() => setExitConfirm(false)} label="Leave the lesson?">
+        <h3 className="text-[17px] mb-1">Leave the lesson?</h3>
+        <p className="text-[14px] mb-4" style={{ color: "var(--muted-foreground)" }}>
+          Your progress on this screen won't be saved.
+        </p>
+        <div className="flex flex-col gap-2">
+          <PrimaryButton onClick={() => setExitConfirm(false)}>Keep learning</PrimaryButton>
+          <SecondaryButton onClick={exit}>Leave</SecondaryButton>
+        </div>
+      </BottomSheet>
 
       {/* Finn dock + sheets */}
       <StudyCopilot
