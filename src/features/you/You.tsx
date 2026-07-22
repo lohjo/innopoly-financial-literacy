@@ -1,98 +1,111 @@
 import { useNavigate } from "react-router";
-import { Award, ChevronRight, History, LineChart, Settings as SettingsIcon } from "lucide-react";
-import { Card, Num, Pill } from "../../components/primitives";
+import { ChevronRight, User, BarChart3, Trophy, Target, Settings, Bell, HelpCircle, Info, LogOut } from "lucide-react";
+import { Card } from "../../components/primitives";
 import { useStore } from "../../stores/store";
-import { FinnAvatar } from "../copilot/FinnAvatar";
-import { GOALS } from "../onboarding/goals";
-import { peers } from "./peers";
 
-/** You hub: identity, goal, links, small league card (leaderboard separate from learning evidence,
-    never includes call scores — spec §6.2). */
+/* Updated glass palette extracted from the image */
+const V = { 
+  base: "#EBF5EE",     // Pale minty canvas background
+  text: "#1D604E",     // Deep glass emerald for high-contrast headers
+  textSoft: "#4E7A6E", // Muted glass tone for subtitles/secondary text
+  mid: "#3FA382",      // Primary glass emerald accent
+  bright: "#82C2A5"    // Sage green highlight
+};
+
+const MENU_TOP = [
+  { icon: User, label: "Profile", to: "/you/profile" },
+  { icon: BarChart3, label: "Learning stats", to: "/you/progress" },
+  { icon: Trophy, label: "Achievements", to: "/you/achievements" },
+  { icon: Target, label: "Goals", to: "/you/goals" },
+];
+const MENU_BOTTOM = [
+  { icon: Settings, label: "Settings", to: "/you/settings" },
+  { icon: Bell, label: "Notifications", to: "/you/activity" },
+  { icon: HelpCircle, label: "Help & support", to: "/you/help" },
+  { icon: Info, label: "About", to: "/you/about" },
+];
+
+/* Level has no dedicated store field yet — derived from xp until one exists.
+   1,500 XP per level is a placeholder; swap in the real curve when defined. */
+const XP_PER_LEVEL = 1500;
+
 export function You() {
   const nav = useNavigate();
   const profile = useStore((s) => s.profile);
   const xp = useStore((s) => s.xp);
-  const streak = useStore((s) => s.streak.current);
-  const achievements = useStore((s) => s.achievements);
-  const goal = GOALS.find((g) => g.id === profile?.goalId);
 
-  const rows = [
-    { to: "/you/progress", icon: LineChart, label: "Progress", sub: "mastery with evidence, not vanity counts" },
-    { to: "/you/achievements", icon: Award, label: "Achievements", sub: `${achievements.length} process badges` },
-    { to: "/you/activity", icon: History, label: "Activity", sub: "episodes and calls" },
-    { to: "/you/settings", icon: SettingsIcon, label: "Settings", sub: "privacy, memory, accessibility" },
-  ];
-
-  const you = { name: profile?.name || "You", points: xp };
-  const board = [...peers.map((p) => ({ name: p.name, points: p.points, you: false })), { ...you, you: true }]
-    .sort((a, b) => b.points - a.points)
-    .slice(0, 5);
+  const level = Math.floor(xp / XP_PER_LEVEL) + 1;
+  const nextLevelXp = level * XP_PER_LEVEL;
+  const xpIntoLevel = xp - (level - 1) * XP_PER_LEVEL;
+  const levelSpan = XP_PER_LEVEL;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
-        <div className="rounded-full p-1" style={{ background: "var(--brand-soft)" }}>
-          <FinnAvatar expression="neutral" size={56} />
+    <div className="flex flex-col gap-4 p-4 -m-4 min-h-screen" style={{ background: V.base }}>
+      <h1 className="text-[22px] font-extrabold" style={{ color: V.text }}>You</h1>
+
+      <Card className="p-5 flex flex-col items-center text-center" style={{ background: "#ffffffb0", border: `1px solid ${V.mid}22` }}>
+        <div
+          className="rounded-full flex items-center justify-center text-[26px] font-extrabold mb-3"
+          style={{ width: 76, height: 76, background: `${V.mid}18`, color: V.mid }}
+        >
+          {profile?.name?.[0]?.toUpperCase() ?? "?"}
         </div>
-        <div>
-          <h1 className="text-[20px]">{profile?.name || "New graduate"}</h1>
-          <p className="text-[13px]" style={{ color: "var(--muted-foreground)" }}>
-            {goal ? `Goal: ${goal.label}` : "No goal picked yet"}
-          </p>
-          <div className="flex gap-2 mt-1">
-            <Pill tone="brand">
-              <Num>{xp}</Num>&nbsp;XP
-            </Pill>
-            <Pill tone="warning">
-              <Num>{streak}</Num>&nbsp;day streak
-            </Pill>
+        <div className="text-[17px] font-extrabold" style={{ color: V.text }}>{profile?.name ?? "Your name"}</div>
+        <span
+          className="text-[11px] font-extrabold px-2.5 py-1 rounded-full mt-2"
+          style={{ background: `${V.mid}18`, color: V.mid }}
+        >
+          ⭐ Level {level}
+        </span>
+        <div className="w-full mt-3">
+          <div className="h-2 rounded-full" style={{ background: "#D3EDE0" }}>
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${Math.min(100, (xpIntoLevel / levelSpan) * 100)}%`, background: V.mid }}
+            />
+          </div>
+          <div className="flex justify-between text-[11px] mt-1" style={{ color: V.textSoft }}>
+            <span>{xp.toLocaleString()} / {nextLevelXp.toLocaleString()} XP</span>
+            <span>Next: Level {level + 1}</span>
           </div>
         </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {rows.map(({ to, icon: Icon, label, sub }) => (
-          <Card key={to} className="p-4 flex items-center gap-3" onClick={() => nav(to)}>
-            <Icon size={20} color="var(--brand-hover)" />
-            <div className="flex-1">
-              <p className="font-bold text-[15px]">{label}</p>
-              <p className="text-[12.5px]" style={{ color: "var(--muted-foreground)" }}>
-                {sub}
-              </p>
-            </div>
-            <ChevronRight size={18} color="var(--muted-foreground)" />
-          </Card>
-        ))}
-      </div>
-
-      {/* league: separate surface, XP only (spec §6.2) */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <p className="font-bold text-[14px]">Cohort league</p>
-          <Pill tone="muted">weekly XP</Pill>
-        </div>
-        <div className="flex flex-col gap-1">
-          {board.map((p, i) => (
-            <div
-              key={p.name + i}
-              className="flex items-center gap-3 px-2 py-1.5 rounded-[10px]"
-              style={{ background: p.you ? "var(--brand-soft)" : "transparent" }}
-            >
-              <span
-                className="flex items-center justify-center font-extrabold text-[12px] tnum shrink-0"
-                style={{ width: 24, height: 24, borderRadius: 10, background: "var(--muted)", color: "var(--muted-foreground)" }}
-              >
-                {i + 1}
-              </span>
-              <span className="flex-1 text-[14px] font-bold">{p.you ? `${p.name} (you)` : p.name}</span>
-              <Num className="text-[13px] font-bold">{p.points.toLocaleString()}</Num>
-            </div>
-          ))}
-        </div>
-        <p className="text-[11.5px] mt-2" style={{ color: "var(--muted-foreground)" }}>
-          Rehearsal-call results never appear here.
-        </p>
       </Card>
+
+      <Card className="p-1.5" style={{ background: "#ffffffb0", border: `1px solid ${V.mid}22` }}>
+        {MENU_TOP.map(({ icon: Icon, label, to }) => (
+          <button
+            key={label}
+            onClick={() => nav(to)}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left"
+          >
+            <Icon size={18} color={V.mid} />
+            <span className="flex-1 text-[14.5px] font-bold" style={{ color: V.text }}>{label}</span>
+            <ChevronRight size={16} color={V.textSoft} />
+          </button>
+        ))}
+      </Card>
+
+      <Card className="p-1.5" style={{ background: "#ffffffb0", border: `1px solid ${V.mid}22` }}>
+        {MENU_BOTTOM.map(({ icon: Icon, label, to }) => (
+          <button
+            key={label}
+            onClick={() => nav(to)}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left"
+          >
+            <Icon size={18} color={V.textSoft} />
+            <span className="flex-1 text-[14.5px] font-bold" style={{ color: V.text }}>{label}</span>
+            <ChevronRight size={16} color={V.textSoft} />
+          </button>
+        ))}
+      </Card>
+
+      <button
+        onClick={() => { /* TODO wire real sign-out */ }}
+        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-[14.5px]"
+        style={{ background: "#fff", color: "#D64545", border: "1px solid #D6454522" }}
+      >
+        <LogOut size={16} /> Log out
+      </button>
     </div>
   );
 }
