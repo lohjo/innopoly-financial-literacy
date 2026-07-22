@@ -1,13 +1,12 @@
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { Flame, Home, Map, RefreshCw, User, Zap } from "lucide-react";
+import { Flame, Home, Trophy, User, Zap } from "lucide-react";
 import { Num } from "../components/primitives";
 import { useStore } from "../stores/store";
 import { FinnButton } from "../features/copilot/FinnButton";
 
 const NAV = [
   { to: "/today", label: "Today", icon: Home },
-  { to: "/journey", label: "Journey", icon: Map },
-  { to: "/practice", label: "Practice", icon: RefreshCw },
+  { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { to: "/you", label: "You", icon: User },
 ];
 

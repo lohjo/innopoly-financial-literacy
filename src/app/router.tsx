@@ -9,7 +9,8 @@ const CoursePlayer = lazy(() =>
 const VideoCoach = lazy(() => import("../features/video-coach/VideoCoach").then((m) => ({ default: m.VideoCoach })));
 const Onboarding = lazy(() => import("../features/onboarding/Onboarding").then((m) => ({ default: m.Onboarding })));
 
-import { Today } from "../features/today/Today";
+import { Home } from "../features/today/Home";
+import { Leaderboard } from "../features/leaderboard/Leaderboard";
 import { Journey } from "../features/mastery/Journey";
 import { Practice } from "../features/mastery/Practice";
 import { You } from "../features/you/You";
@@ -50,7 +51,8 @@ export function AppRouter() {
           }
         />
         <Route element={<AppShell />}>
-          <Route path="/today" element={<Today />} />
+          <Route path="/today" element={<Home />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/journey" element={<Journey />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/you" element={<You />} />
