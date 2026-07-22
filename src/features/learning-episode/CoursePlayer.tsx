@@ -18,6 +18,7 @@ import { PredictionPanel } from "../../components/financial/PredictionPanel";
 import { defaultAnswer, evaluatePuzzle, type SimAnswer } from "../../components/financial/evaluate";
 import { copilotReducer, initCopilot, praiseLine, STALL_MS, type CopilotState } from "../copilot/copilotMachine";
 import { executeToolCommand, type CopilotToolCommand, type TutorAnnotation } from "../copilot/toolExecutor";
+import { TutorPointer } from "../copilot/TutorPointer";
 import { StudyCopilot } from "../copilot/StudyCopilot";
 import { FinnAvatar } from "../copilot/FinnAvatar";
 import { getState, recordEvidence, awardXp, touchStreak, setState as setStore, unlockAchievement, useStore } from "../../stores/store";
@@ -441,6 +442,9 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
           )}
         </div>
       </div>
+
+      {/* Finn's spatial pointer rides above the canvas at the highlighted target */}
+      <TutorPointer targetId={tutorHighlight} annotation={tutorAnnotation} />
 
       {/* exit confirmation — leaving mid-screen loses that screen's progress */}
       <BottomSheet open={exitConfirm} onClose={() => setExitConfirm(false)} label="Leave the lesson?">

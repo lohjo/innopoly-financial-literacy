@@ -1,4 +1,5 @@
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
+import { useMotionPrefs } from "../../motion";
 
 export type FinnExpression =
   | "neutral"
@@ -20,7 +21,8 @@ export function FinnAvatar({
   expression?: FinnExpression;
   size?: number;
 }) {
-  const reduce = useReducedMotion();
+  // honors the in-app Settings toggle as well as the OS preference
+  const reduce = useMotionPrefs().collapse;
   const e = expression;
 
   // ear tilt: listening/curious tilt slightly
@@ -52,14 +54,14 @@ export function FinnAvatar({
           ? undefined
           : e === "celebrating"
             ? { y: [0, -8, 0] }
-            : { y: [0, -2, 0] }
+            : { y: [0, -2, 0], scale: [1, 1.015, 1] } // idle breath
       }
       transition={
         reduce
           ? undefined
           : e === "celebrating"
             ? { duration: 0.52, ease: "easeOut" }
-            : { duration: 3.2, repeat: Infinity, ease: "easeInOut" }
+            : { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
       }
     >
       {/* ears */}
