@@ -1,29 +1,74 @@
 // src/features/home/Home.tsx
 import { useNavigate } from "react-router";
 import { Bell } from "lucide-react";
-import { Card } from "../../components/primitives";
+import { motion } from "motion/react";
+import { PrimaryButton, Pill } from "../../components/primitives";
 import { useStore } from "../../stores/store";
+import { useMotionPrefs } from "../../motion";
 import { Journey } from "../mastery/Journey"; // Keep Journey cleanly isolated!
+import { currentLessonInfo } from "../mastery/currentLesson";
 
-const V = { 
+const V = {
   base: "#EBF5EE",
   text: "#1D604E",
   textSoft: "#4E7A6E",
   mid: "#3FA382",
 };
 
+/** Layered "Jump back in" hero: stacked-card look with the current lesson and
+    one primary Continue action (streak lives in the TopBar, not here). */
+function ContinueHero() {
+  const nav = useNavigate();
+  const { collapse } = useMotionPrefs();
+  const lessonsCompleted = useStore((s) => s.lessonsCompleted);
+  const info = currentLessonInfo(lessonsCompleted);
+  if (!info) return null;
+
+  const fresh = lessonsCompleted.length === 0;
+  return (
+    <div className="relative">
+      {/* offset shadow card behind — layered stack look */}
+      <div
+        aria-hidden
+        className="absolute inset-x-2 -bottom-1.5 top-3 rounded-[var(--radius-card)]"
+        style={{ background: "color-mix(in srgb, var(--brand) 30%, transparent)" }}
+      />
+      <motion.div
+        whileTap={collapse ? undefined : { scale: 0.96 }}
+        transition={{ duration: 0.08 }}
+        className="relative rounded-[var(--radius-card)] p-4 flex flex-col gap-3"
+        style={{
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          boxShadow: "var(--shadow-2, var(--shadow-1))",
+        }}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+            {fresh ? "Start here" : "Jump back in"}
+          </span>
+          <Pill tone="brand">{info.chapter.title}</Pill>
+        </div>
+        <h2 className="text-[18px] font-extrabold leading-snug" style={{ color: "var(--foreground)" }}>
+          {info.lesson.title}
+        </h2>
+        <PrimaryButton onClick={() => nav(`/learn/${info.lesson.id}`)}>
+          {fresh ? "Start your first lesson" : `Continue · ~${info.lesson.minutes} min`}
+        </PrimaryButton>
+      </motion.div>
+    </div>
+  );
+}
+
 export function Home() {
   const nav = useNavigate();
   const profile = useStore((s) => s.profile);
 
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const dayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-
   return (
     /* Screen height strictly locked to 100vh */
     <div className="flex flex-col h-screen overflow-hidden p-4 -m-4" style={{ background: V.base }}>
-      
-      {/* FIXED TOP HEADER (Greeting + 7-Day Progress) */}
+
+      {/* FIXED TOP HEADER (Greeting + Continue hero) */}
       <div className="shrink-0 z-30 flex flex-col gap-3 pb-2 shadow-sm" style={{ background: V.base }}>
         <div className="flex items-center justify-between">
           <div>
@@ -42,26 +87,7 @@ export function Home() {
           </button>
         </div>
 
-        <Card className="p-3.5 shadow-sm" style={{ background: "#ffffffb0", border: `1px solid ${V.mid}22` }}>
-          <div className="text-[12.5px] font-bold mb-2.5" style={{ color: V.text }}>7 day progress</div>
-          <div className="flex items-center justify-between">
-            {days.map((d, i) => (
-              <div key={d} className="flex flex-col items-center gap-1">
-                <div
-                  className="flex items-center justify-center rounded-full text-[11px] font-bold"
-                  style={{
-                    width: 26, height: 26,
-                    background: i <= dayIndex ? V.mid : "#D3EDE0",
-                    color: i <= dayIndex ? "#fff" : V.textSoft,
-                  }}
-                >
-                  {i <= dayIndex ? "✓" : ""}
-                </div>
-                <span className="text-[10px]" style={{ color: V.textSoft }}>{d}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
+        <ContinueHero />
       </div>
 
       {/* ISOLATED SCROLLVIEW: Houses Journey without rewriting its 300+ lines */}
