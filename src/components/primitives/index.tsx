@@ -151,6 +151,29 @@ export function Card({
   );
 }
 
+/** Read-only XP gain chip (V7 flight target; parent owns travel motion). */
+export function XPChip({ amount }: { amount: number }) {
+  return (
+    <span
+      className="inline-flex items-center shrink-0 tnum"
+      style={{
+        height: 22,
+        borderRadius: 999,
+        padding: "0 8px",
+        background: "color-mix(in srgb, var(--success) 16%, transparent)",
+        color: "var(--success)",
+        fontWeight: 800,
+        fontSize: 12,
+        lineHeight: 1,
+        boxShadow: "var(--shadow-1)",
+      }}
+      aria-hidden
+    >
+      +{amount}
+    </span>
+  );
+}
+
 /** Segmented lesson progress (spec §7.4: segmented for lesson steps). */
 export function SegmentedProgress({ total, current }: { total: number; current: number }) {
   return (
@@ -176,9 +199,12 @@ export type CriterionState = "pending" | "pass" | "fail";
 export function CriteriaList({
   items,
   celebrate = false,
+  highlightId = null,
 }: {
   items: { id: string; label: string; state: CriterionState; detail?: string }[];
   celebrate?: boolean;
+  /** Tutor "point to what matters": ring the one row Finn is talking about. */
+  highlightId?: string | null;
 }) {
   const { collapse } = useMotionPrefs();
   const flip = celebrate && !collapse;
@@ -187,10 +213,19 @@ export function CriteriaList({
       {items.map((c, i) => (
         <motion.li
           key={c.id}
-          className="flex items-start gap-2 text-[14px]"
+          className="flex items-start gap-2 text-[14px] rounded-[8px] -mx-1 px-1"
           data-criterion={c.id}
+          data-tutor-target={c.id}
           animate={flip ? { rotateX: [0, -80, 0] } : undefined}
           transition={flip ? { delay: i * 0.06, duration: dur.card } : undefined}
+          style={
+            highlightId === c.id
+              ? {
+                  background: "color-mix(in srgb, var(--info) 10%, transparent)",
+                  boxShadow: "0 0 0 2px color-mix(in srgb, var(--info) 55%, transparent)",
+                }
+              : undefined
+          }
         >
           <span
             className="mt-0.5 inline-flex items-center justify-center rounded-full shrink-0"

@@ -1,43 +1,79 @@
 # Current State
 
-**Last updated:** 2026-07-15
+**Last updated:** 2026-07-22
 
 ## Repository Status
 
-- `main` is the integration branch for finfy-literacy, a Duolingo-style gamified financial literacy app for newgrads who just received their first paycheck.
-- Git history is a single `Initial commit`; nothing has been merged into `main` since.
-- The repository is currently **pre-build / planning phase**: `src/` exists but is empty, and there is no application code (no framework scaffold, no package manifest, no UI, no backend) anywhere in the tree.
-- Everything that exists beyond the initial commit is untracked documentation under `docs/` (`git status` shows `?? docs/` — nothing has been staged or committed yet) — product/architecture plans, Phase 0 planning, per-feature specs, and reference material (Mobbin references, fingo mockup screenshots under `docs/audit/fingo-references-png/`).
-- Every markdown file under `docs/` — including `docs/plans/`, `docs/brainstorms/`, `docs/audit/`, and the top-level `docs/*.md` files — has been rewritten (or, in `voice-wiki.md`'s case, deliberately repurposed) for finfy-literacy. None of it carries leftover content from the prior, unrelated product ("sensemaking-agents": a Singapore secondary-school ECG-reflection app built on OpenAI Realtime `gpt-realtime-2`, the OpenAI Agents SDK, Trigger.dev, etc. as an agent SDK, WorkOS, Postgres/RLS) that this repo's docs were originally seeded from — see Plan Status below for the per-file breakdown.
+- `main` is the integration branch for **finfy-literacy** (repo: `innopoly-financial-literacy`) — a Brilliant/Duolingo-style first-paycheck financial onboarding app for new graduates.
+- Shipped wedge (local-first, no production backend): React 18.3 + Vite 6.3.5 + Tailwind 4 CSS-first frontend with deterministic lesson/copilot/call machines, BKT mastery, and `finfy.v1` localStorage persistence.
+- Live AI seam (2026-07-22): isolated FastAPI + Google ADK / Gemini Live tutor at `tutor-service/`, wired into the CoursePlayer Finn panel via WebSocket PCM + text.
+- Package manager of record: **pnpm** (`pnpm typecheck && pnpm test && pnpm build`). Tutor Python env: single `tutor-service/.venv` (Windows or POSIX — do not create a parallel `.venv-win`).
 
 ## Recent PR Status
 
-- No pull requests have been opened yet. All work to date is uncommitted/untracked documentation on `main`; there is no PR history to report.
+- PR #1 and PR #3 have landed on `main` (frontend rebuild / journey roadmap docs). Local work since then is largely **uncommitted**: live tutor service + StudyCopilot live path, motion tokens, Brilliant/Quillino reference assets, and shell/nav experiments.
 
-## Plan Status
+## What shipped / completed (since ~2026-07-22 morning)
 
-- `docs/plans/origin.md` — source of truth for the product (scope, target user, MVP boundary, core user flow); drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/plans/finfy-literacy-phase-0-planning.md` — Phase 0 planning doc (KPIs, user journey, MVP/Custom-courses/Advanced-learning tracking); drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/plans/features/gamified-challenges.md` — feature spec for the core challenge loop; drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/plans/features/leaderboards-peer-competition.md` — feature spec for peer leaderboards; drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/plans/features/ai-generated-summaries.md` — feature spec for the strict-format AI post-challenge summary; drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/plans/features/onboarding-account-management.md` — feature spec for onboarding and account management; drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/plans/features/mobile-first-design.md` — feature spec for the mobile-first design constraints; drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/plans/finfy-literacy.md` — full finfy-literacy implementation plan (requirements, Next.js/Supabase/Drizzle stack, a 16-unit phased build plan, data model, risks); drafted, accurate to finfy-literacy, not yet implemented. Contains no leftover content from the prior sensemaking-agents product.
-- `docs/plans/finfy-literacy-architecture-plan.md` — full finfy-literacy product/architecture plan (target user, trust model, a five-agent Sequencer/Scorekeeper/Recap Writer/Standings Framer/Compliance Guardrail pipeline, data model, phased implementation plan); drafted, accurate to finfy-literacy, not yet implemented. The agent names are new and finfy-literacy-specific, not the prior product's Mirror/Connector/Pathfinder/Coach/Guardian lineup — this file contains no leftover content from that product.
-- `docs/plans/voice-wiki.md` — already repurposed for finfy-literacy: a deferred, out-of-MVP-scope plan for the "AI video call" mascot feature named in `origin.md`. Fully rewritten; contains no leftover content from the prior product's unrelated voice-journaling CLI concept.
-- `docs/plans/2026-07-15-001-frontend-replicate.md` — an unfilled implementation-plan template (title is still the literal placeholder `feat: <feat>`, every section is bracketed placeholder text like `<path>` / `<requirement group summary>`); generic boilerplate with no product-specific content of any kind, old or new; **incomplete draft, not usable as-is**.
-- `docs/plans/2026-07-15-002-refactor-e2e-ux-motion-audit-plan.md` — a UX/motion/polish audit plan written specifically for finfy-literacy's own screens (challenge feed, AI-summary card, leaderboard, streak/progress, profile), cross-referencing the local Fingo mockups and Mobbin references; drafted, accurate to finfy-literacy, not yet implemented (no shipped frontend exists yet to audit against).
-- `docs/brainstorms/2026-07-20-finfy-literacy-loop-premise-check.md` — finfy-literacy's own premise check on `finfy-literacy-architecture-plan.md`'s five-agent pipeline (does the summarizer need five chained LLM calls, or does a single-shot call with deterministic scoring and a rule-checker clear the MVP bar); drafted, accurate to finfy-literacy, not yet implemented. Contains no leftover content from the prior product's unrelated "Sensemaking Agents" brainstorm.
-- `docs/app-editor-agent-editing-design.md` — design spike for how an agent edits a `ChallengeSpec` (the content model behind one challenge: question bank, answer key, difficulty, category, scoring rubric, point value); drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/design-system-2026-07-15.md` — finfy-literacy's component vocabulary (CTAs, tabs, status badges, category/difficulty tags, leaderboard rank pills); drafted, accurate to finfy-literacy, not yet implemented.
-- `docs/pr1-description.md` — a blank, reusable PR-description template for finfy-literacy's actual first PR (bracketed placeholders throughout — no real commits exist yet to describe).
-- `docs/audit/mobbin-references-2026-07-15.md` — Mobbin + Fingo benchmark brief across finfy-literacy's six core surface families (onboarding, challenge/quiz screen, leaderboard, AI-summary card, streak tracking, profile); drafted, accurate to finfy-literacy.
+### Live Finn tutor (frontend)
 
-## Current Product Shape
+- Completed live tutor integration in `StudyCopilot` + `useLiveTutor`: click-to-activate panel, glow / listening / speaking states, typed and microphone input, PCM audio playback, transcript display, and constrained criterion highlighting.
+- Audio worklets live under `public/tutor-worklets/` (also legacy `public/pcm-*-processor.js` copies present during transition).
+- Env: `VITE_TUTOR_WS_URL`, `VITE_TUTOR_ACCESS_TOKEN` (see root `.env.example` / tutor `.env.example`).
 
-There is no shipped product surface yet. No frontend, backend, database, or deployment exists in this repository; `src/` is an empty directory and there is no build tooling, no package manifest, and no application entry point of any kind.
+### Deterministic Finn hint policy
 
-The only real artifact of this repository today is documentation: `docs/plans/origin.md` (product ground truth), `docs/plans/finfy-literacy-phase-0-planning.md` (KPIs and user journey), and `docs/plans/features/*.md` (the five MVP feature specs — gamified challenges, leaderboards and peer competition, AI-generated summaries, onboarding and account management, and mobile-first design) describe the intended product accurately: newgrads complete short Duolingo-style financial-literacy challenges (budgeting, saving, investing, credit management), earn points on a leaderboard shared with a real peer group, and receive a strict-format AI-generated summary after each challenge. None of this has been built. `docs/plans/finfy-literacy.md` and `docs/plans/finfy-literacy-architecture-plan.md` both go further and lay out concrete, finfy-literacy-specific implementation plans (tech stack, data model, phased build units) — so there is an actionable implementation layer to build against on top of the product-definition layer (origin, Phase 0, and the five feature specs), even though none of it has been implemented yet.
+- Kept Finn’s deterministic hint ladder to **two non-answer levels** (H1–H2); removed the prior answer-revealing walkthrough stages from the live offer path (`copilotMachine` caps offers at `Math.min(2, …)`).
+- Misconception teaching card path remains separate from the live spoken ladder.
 
-Reference material exists to support future UI work — mockup screenshots at `docs/audit/fingo-references-png/fingo-001.png` through `fingo-006.png` and a Mobbin references note at `docs/audit/mobbin-references-2026-07-15.md` — but no code has been written against them yet.
+### Tutor service (`tutor-service/`)
+
+- Completed the isolated ADK/Gemini Live service: in-memory sessions, validated allowlisted lesson context, origin/token checks, structured trace logging, WebSocket audio/text transport, and non-mutating render tools only (`render_hint_focus` → `highlight_criterion` / `clear_highlight` / `pulse_tutor`).
+- Policy envelope: catalog-derived prompts/criteria (`contracts.validate_context`), spoken-hint sanitizer (`policy.safe_spoken_hint`), tool allowlist guards in `agent.py`.
+- Added backend safety tests covering context injection rejection, invalid criteria, forbidden render commands, and answer-like hint rejection (`tutor-service/tests/`).
+- **Single Python env:** use `tutor-service/.venv` only. Install: `python -m venv tutor-service/.venv` then `tutor-service/.venv/Scripts/python -m pip install -e "tutor-service[test]"` (POSIX: `.venv/bin/python`). Run tests from the service dir: `cd tutor-service && .venv/Scripts/python -m pytest -q`.
+
+### Other relevant changes (last ~14h)
+
+- Motion system scaffold: `src/motion/{tokens,transitions,useMotionPrefs}.ts` + `motion.test.ts` (duration/easing bands aligned to theme tokens).
+- Shell / navigation experiments: Today surface as `Home`, dedicated `Leaderboard` feature route; AppShell bottom nav currently Today / Leaderboard / You (Journey/Practice still routed).
+- Journey roadmap layout updates (merged via PR #3 docs/UI pass).
+- Brilliant reference PNGs reorganized under `docs/audit/brilliant-references-png/{mobile,desktop}/`; Quillino reference screenshot added.
+- Ground-truth + agent prompts: `docs/plans/2026-07-22-001-ground-truth-brief.md`, `docs/plans/2026-07-22-001-fable5-brilliant-koji-implementation-prompt.md` (Brilliant UX + Koji Finn plan/implement brief). Placeholder `docs/plans/features/finfy-tutor.md` exists but is empty.
+- Playwright added as a frontend `devDependency` for repro/debug scripts (e.g. `scripts/repro-live-tutor.mjs`); not a full CI e2e suite yet.
+- `.gitignore` now ignores all `.venv/` trees, `__pycache__`, and `.cursor/` — the accidental Linux root `.venv` that was staged must stay out of git.
+
+## Current Product Shape (verified filesystem)
+
+| Area | State |
+| --- | --- |
+| Entry | `src/main.tsx` → `src/app/App.tsx` → `AppRouter` |
+| Tabs | `/today` (Home), `/leaderboard`, `/you/*`; `/journey` + `/practice` still registered |
+| Full-screen | `/learn/:lessonId`, `/review/:conceptId`, `/call/:scenarioId`, `/onboarding` |
+| Features | `learning-episode`, `copilot` (+ `live/`), `video-coach`, `mastery`, `missions`, `today`, `you`, `leaderboard`, `onboarding` |
+| Content | 5 lessons / 2 chapters, 3 rehearsal scenarios, achievements; content solvability + scenario reachability tests |
+| Persistence | `src/stores/store.ts` → `finfy.v1` localStorage |
+| Styles | `src/styles/` jade + ink + warm-paper tokens; Nunito Sans |
+| Motion | `src/motion/` + theme CSS custom props |
+| Live tutor | `tutor-service/` (FastAPI) ↔ `src/features/copilot/live/useLiveTutor.ts` |
+| Draft / not product | `src/agents/`, `src/db/`, `src/server/`, `src/routes/`, commented `api/index.ts`, `scripts/ablate.ts` |
+
+**Determinism rule still holds:** grading, sim math, XP/streak, and mastery stay offline-safe and model-free. LLM only at the live-tutor edge behind typed contracts.
+
+## Known gaps / next
+
+- Live tutor Phase 0 trust bugs: missing/partial transcription (bubble sometimes falls back when `transcript` is null); stabilize speech↔UI before glam.
+- CLAUDE.md last verified 2026-07-18 — does **not** yet document `tutor-service/` or the live copilot path (trust code + this file).
+- E2E Brilliant UX + Koji pointing polish is in progress per `2026-07-22-001-fable5-brilliant-koji-implementation-prompt.md` / the e2e motion audit plan — not closed.
+- `docs/plans/features/finfy-tutor.md` needs a real feature write-up.
+- No `lint` / `format` / `preview` scripts; no production deploy for tutor-service beyond `Dockerfile`.
+
+## Plan Status (high-signal only)
+
+Treat plans under `docs/plans/` as **design intent**, not proof of implementation, except where this file or the filesystem confirms otherwise.
+
+- `origin.md`, architecture/phase-0 plans, and feature specs — product intent; partially superseded by the 2026-07-18 frontend rebuild + 2026-07-22 live tutor.
+- `2026-07-17-001-brilliant-replicate.md`, `2026-07-18-001-ai-copilot.md`, `2026-07-18-002-seamless-brilliant-copilot-agent-prompt.md` — interaction / Finn intent that the live stack is now executing against.
+- `2026-07-15-002-refactor-e2e-ux-motion-audit-plan.md` — UX/motion audit contract; still the quality bar for the ongoing e2e polish pass.
+- `2026-07-22-001-ground-truth-brief.md` — verified map for skill/agent authors (re-check paths before trusting runbooks).
+- `2026-07-22-001-fable5-brilliant-koji-implementation-prompt.md` — active agent prompt for Brilliant + Koji Finn work.

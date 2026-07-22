@@ -1,16 +1,21 @@
 import { useState } from "react";
+import { motion } from "motion/react";
 import { FinnAvatar } from "./FinnAvatar";
+import { useMotionPrefs } from "../../motion";
 
 /** Contextual Finn entry point in the app shell (spec §6.1: help button, not a fifth tab).
     Outside a lesson it offers general help actions; contextual copilot lives in CoursePlayer. */
 export function FinnButton() {
   const [open, setOpen] = useState(false);
+  const { collapse } = useMotionPrefs();
   return (
     <>
-      <button
+      <motion.button
         onClick={() => setOpen((o) => !o)}
         aria-label="Open Finn"
         aria-expanded={open}
+        whileHover={collapse ? undefined : { scale: 1.03 }}
+        whileTap={collapse ? undefined : { scale: 0.97 }}
         className="absolute right-4 flex items-center justify-center"
         style={{
           bottom: 12,
@@ -23,7 +28,7 @@ export function FinnButton() {
         }}
       >
         <FinnAvatar expression={open ? "attentive" : "neutral"} size={38} />
-      </button>
+      </motion.button>
       {open && (
         <div
           role="dialog"

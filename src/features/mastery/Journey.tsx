@@ -1,14 +1,18 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { AnimatePresence, motion } from "motion/react";
 import { Check, ChevronDown, ChevronUp, Lock, Phone, Star, Sparkles, Moon } from "lucide-react";
 import { useStore } from "../../stores/store";
 import { CHAPTERS } from "../../content/chapters";
 import { lessonById } from "../../content/lessons";
 import { scenarioById } from "../../content/scenarios";
+import { useMotionPrefs } from "../../motion";
+import { PrimaryButton } from "../../components/primitives";
+import { currentLessonId } from "./currentLesson";
 
 const NODE_GAP_Y = 115; // Generous vertical gap so nodes don't stack
 const NODE_D = 48;     // Compact circle node size
-const CALL_D = 38;     // Compact phone call node size
+const CALL_D = 40;     // Compact phone call node size (≥40px hit target)
 const OFFSET_FRACTIONS = [0, 0.25, 0.35, 0.20, 0, -0.20, -0.35, -0.25]; // Wide curve swing
 
 const FLAVORS = [
@@ -158,6 +162,7 @@ export function ChapterPath({
   nav: ReturnType<typeof useNavigate>;
 }) {
   const steps = buildSteps(chapter);
+  const { collapse } = useMotionPrefs();
 
   const headerRef = useRef<HTMLButtonElement>(null);
   const [width, setWidth] = useState(340);
@@ -176,6 +181,7 @@ export function ChapterPath({
 
   const chapterLessonIds = chapter.lessons.map((l) => l.id);
   const hasCurrent = currentId ? chapterLessonIds.includes(currentId) : false;
+  const currentLesson = hasCurrent ? chapter.lessons.find((l) => l.id === currentId) : undefined;
   const chapterDone = chapterLessonIds.every((id) => lessonsCompleted.includes(id));
   const [open, setOpen] = useState(hasCurrent || (!chapterDone && chapterIndex === 0));
 
@@ -187,7 +193,7 @@ export function ChapterPath({
           ref={headerRef}
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className="w-full text-left px-5 py-4 relative overflow-hidden transition-all duration-300 shadow-lg"
+          className="w-full text-left px-5 py-4 relative overflow-hidden transition-[border-radius] duration-300 shadow-lg"
           style={{
             background: "linear-gradient(135deg, #5ECB8D 0%, #30A35C 100%)",
             border: "1.5px solid rgba(255, 255, 255, 0.65)",
@@ -233,7 +239,7 @@ export function ChapterPath({
 
       {/* Accordion Liquid Glass Lesson Body Container */}
       <div
-        className="w-full relative z-0 overflow-hidden transition-all duration-450 ease-[cubic-bezier(.22,1,.36,1)]"
+        className="w-full relative z-0 overflow-hidden transition-[height] duration-450 ease-[cubic-bezier(.22,1,.36,1)]"
         style={{ height: open ? height : 0 }}
       >
         <div
@@ -263,9 +269,10 @@ export function ChapterPath({
             if (step.kind === "call") {
               const done = callsCompleted.some((c) => c.scenarioId === step.id);
               return (
-                <button
+                <motion.button
                   key={step.id}
                   onClick={() => nav(`/call/${step.id}`)}
+                  whileTap={collapse ? undefined : { scale: 0.96 }}
                   className="absolute flex flex-col items-center gap-0.5 -translate-x-1/2 -translate-y-1/2 z-0"
                   style={{ left: p.x, top: p.y, width: CALL_D + 90 }}
                 >
@@ -283,7 +290,7 @@ export function ChapterPath({
                   <span className="text-[10px] font-extrabold text-center leading-tight px-1.5 py-0.5 rounded-full shadow-sm" style={{ color: "#0F4A26", background: "#ffffffdd" }}>
                     {step.title}
                   </span>
-                </button>
+                </motion.button>
               );
             }
 
@@ -294,15 +301,17 @@ export function ChapterPath({
             const size = current ? NODE_D + 8 : NODE_D;
 
             return (
-              <button
+              <motion.button
                 key={step.id}
                 disabled={locked}
                 onClick={() => nav(`/learn/${step.id}`)}
+                whileTap={locked || collapse ? undefined : { scale: 0.96 }}
                 className="absolute flex flex-col items-center gap-0.5 -translate-x-1/2 -translate-y-1/2 z-0"
                 style={{ left: p.x, top: p.y, width: size + 100 }}
               >
                 {current && (
-                  <div className="absolute rounded-full animate-ping pointer-events-none" style={{ width: size + 10, height: size + 10, top: -5, left: "calc(50% - " + (size + 10)/2 + "px)", background: `${flavor.a}66` }} />
+                  // reduced motion: same ring, just static (no ping)
+                  <div className={`absolute rounded-full pointer-events-none ${collapse ? "" : "animate-ping"}`} style={{ width: size + 10, height: size + 10, top: -5, left: "calc(50% - " + (size + 10)/2 + "px)", background: `${flavor.a}66` }} />
                 )}
                 <div
                   className="relative flex items-center justify-center rounded-full shrink-0 font-extrabold text-[15px]"
@@ -332,11 +341,43 @@ export function ChapterPath({
                     ★ START · ~{step.minutes} MIN
                   </span>
                 )}
-              </button>
+              </motion.button>
             );
           })}
         </div>
       </div>
+
+      {/* Sticky Start card: persists while the current lesson's chapter is open
+          (Brilliant path grammar — the next action is always one tap away). */}
+      <AnimatePresence>
+        {open && hasCurrent && currentLesson && (
+          <motion.div
+            initial={collapse ? { opacity: 0 } : { opacity: 0, y: 64 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={collapse ? { opacity: 0 } : { opacity: 0, y: 64 }}
+            transition={collapse ? { duration: 0.08 } : { type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed inset-x-0 z-30 pointer-events-none"
+            style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}
+          >
+            <div
+              className="pointer-events-auto mx-auto w-full max-w-[430px] md:max-w-[720px] px-4 py-3 flex items-center gap-3 rounded-[var(--radius-card)] shadow-lg"
+              style={{ background: "var(--card)", border: "1px solid var(--border)", maxWidth: "min(430px, calc(100% - 32px))" }}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+                  Up next · ~{currentLesson.minutes} min
+                </p>
+                <p className="text-[14px] font-extrabold truncate" style={{ color: "var(--foreground)" }}>
+                  {currentLesson.title}
+                </p>
+              </div>
+              <PrimaryButton className="!w-auto shrink-0 px-5" onClick={() => nav(`/learn/${currentLesson.id}`)}>
+                Start
+              </PrimaryButton>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -346,8 +387,7 @@ export function Journey() {
   const lessonsCompleted = useStore((s) => s.lessonsCompleted);
   const callsCompleted = useStore((s) => s.callsCompleted);
 
-  const flat = CHAPTERS.flatMap((c) => c.lessons.map((l) => l.id));
-  const currentId = flat.find((id) => !lessonsCompleted.includes(id));
+  const currentId = currentLessonId(lessonsCompleted);
 
   return (
     <div className="flex flex-col gap-4 w-full">

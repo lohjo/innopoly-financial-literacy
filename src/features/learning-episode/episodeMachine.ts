@@ -29,6 +29,7 @@ export type EpisodeState = {
 
 export type EpisodeAction =
   | { t: "INTERACT" }
+  | { t: "EVALUATE" }
   | { t: "CHECK"; results: CriterionResult[] }
   | { t: "RETRY" }
   | { t: "OPEN_HINT"; level: 1 | 2 | 3 | 4 }
@@ -87,6 +88,12 @@ export function episodeReducer(state: EpisodeState, action: EpisodeAction, lesso
         return { ...state, status: "dirty" };
       }
       return state;
+    }
+
+    case "EVALUATE": {
+      if (state.status === "success" || state.status === "evaluating") return state;
+      if (state.status === "idle") return state;
+      return { ...state, status: "evaluating" };
     }
 
     case "CHECK": {

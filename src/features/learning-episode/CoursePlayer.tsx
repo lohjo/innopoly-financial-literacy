@@ -11,12 +11,16 @@ import { dur, ease, screenEnter, spring, useMotionPrefs } from "../../motion";
 import { buildReviewLesson, lessonById } from "../../content/lessons";
 import { CHAPTERS } from "../../content/chapters";
 import { Pill, PrimaryButton, SecondaryButton, SegmentedProgress, Num } from "../../components/primitives";
+import { BottomSheet } from "../../components/primitives/BottomSheet";
 import { SimulationCanvas } from "../../components/financial/SimulationCanvas";
 import { ObserveCanvas } from "../../components/financial/ObserveCanvas";
 import { PredictionPanel } from "../../components/financial/PredictionPanel";
 import { defaultAnswer, evaluatePuzzle, type SimAnswer } from "../../components/financial/evaluate";
 import { copilotReducer, initCopilot, praiseLine, STALL_MS, type CopilotState } from "../copilot/copilotMachine";
+import { executeToolCommand, type CopilotToolCommand, type TutorAnnotation } from "../copilot/toolExecutor";
+import { TutorPointer } from "../copilot/TutorPointer";
 import { StudyCopilot } from "../copilot/StudyCopilot";
+import type { TutorContext } from "../copilot/live/useLiveTutor";
 import { FinnAvatar } from "../copilot/FinnAvatar";
 import { getState, recordEvidence, awardXp, touchStreak, setState as setStore, unlockAchievement, useStore } from "../../stores/store";
 
@@ -197,6 +201,41 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
     [rawDispatch],
   );
 
+  /* --- tutor tool seam: every UI command (mock today, live later) runs through one executor --- */
+  const [tutorHighlight, setTutorHighlight] = useState<string | null>(null);
+  const [tutorAnnotation, setTutorAnnotation] = useState<TutorAnnotation | null>(null);
+  const runTool = useCallback(
+    (cmd: CopilotToolCommand) =>
+      executeToolCommand(cmd, {
+        setHighlight: setTutorHighlight,
+        setAnnotation: setTutorAnnotation,
+        openHint,
+        setSpeech,
+      }),
+    [openHint],
+  );
+
+  /* live tutor context: WIP voice tutor reads the current puzzle/quiz/predict beat */
+  const tutorContext: TutorContext | undefined = useMemo(() => {
+    if (screen.kind !== "puzzle" && screen.kind !== "quiz" && screen.kind !== "predict") return undefined;
+    return {
+      lesson_id: lesson.id,
+      screen_id: screen.id,
+      prompt: screen.kind === "puzzle" ? screen.puzzle.prompt : screen.prompt,
+      criteria: screen.kind === "puzzle" ? screen.puzzle.criteria.map((c) => ({ id: c.id, label: c.label, state: episode.criteria[c.id] ?? "pending" })) : [],
+      status: episode.status,
+      failed_criteria: Object.entries(episode.criteria).filter(([, s]) => s === "fail").map(([id]) => id),
+      hint_level: Math.min(2, episode.hintLevelUsed),
+    };
+  }, [lesson.id, screen, episode.status, episode.criteria, episode.hintLevelUsed]);
+
+  /* H2 ("point to what matters") highlights the authored target for this screen */
+  useEffect(() => {
+    const target = copilot.s === "hinting" && copilot.level === 2 ? (lesson.hintTargets?.[screen.id] ?? null) : null;
+    if (target) runTool({ type: "highlight_element", targetId: target });
+    else runTool({ type: "clear" });
+  }, [copilot, screen?.id, lesson, runTool]);
+
   const hintDone = useCallback(() => {
     // H4 walkthrough ends with a changed-value retry (spec §2.4): swap in retryParams
     if (copilot.s === "hinting" && copilot.level === 4 && screen?.kind === "puzzle" && screen.puzzle.retryParams) {
@@ -261,6 +300,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   const exit = () => {
     nav(review ? "/practice" : "/journey");
   };
+  const [exitConfirm, setExitConfirm] = useState(false);
 
   /* --- completion screen --- */
   if (episode.done) {
@@ -307,7 +347,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   return (
     <div className="flex flex-col mx-auto w-full max-w-[430px] md:max-w-[640px]" style={{ minHeight: "100dvh" }}>
       <header className="flex items-center gap-3 px-4 py-3">
-        <button onClick={exit} aria-label="Exit lesson" className="p-2 -m-2">
+        <button onClick={() => setExitConfirm(true)} aria-label="Exit lesson" className="p-2 -m-2">
           <X size={22} color="var(--muted-foreground)" strokeWidth={2.5} />
         </button>
         <SegmentedProgress total={lesson.screens.length} current={episode.screenIndex + (canContinue ? 1 : 0)} />
@@ -361,7 +401,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
               }}
               dispatch={dispatch}
               copilot={copilot}
-              highlightCriterion={copilot.s === "hinting" && copilot.level === 2 ? (lesson.hintTargets?.[screen.id] ?? null) : null}
+              highlightCriterion={tutorHighlight}
             />
           </motion.div>
         </AnimatePresence>
@@ -418,6 +458,21 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
         </div>
       </div>
 
+      {/* Finn's spatial pointer rides above the canvas at the highlighted target */}
+      <TutorPointer targetId={tutorHighlight} annotation={tutorAnnotation} />
+
+      {/* exit confirmation — leaving mid-screen loses that screen's progress */}
+      <BottomSheet open={exitConfirm} onClose={() => setExitConfirm(false)} label="Leave the lesson?">
+        <h3 className="text-[17px] mb-1">Leave the lesson?</h3>
+        <p className="text-[14px] mb-4" style={{ color: "var(--muted-foreground)" }}>
+          Your progress on this screen won't be saved.
+        </p>
+        <div className="flex flex-col gap-2">
+          <PrimaryButton onClick={() => setExitConfirm(false)}>Keep learning</PrimaryButton>
+          <SecondaryButton onClick={exit}>Leave</SecondaryButton>
+        </div>
+      </BottomSheet>
+
       {/* Finn dock + sheets */}
       <StudyCopilot
         state={copilot}
@@ -429,6 +484,8 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
         onHintDone={hintDone}
         onTeachDone={teachDone}
         misconception={activeMisconception}
+        tutorContext={tutorContext}
+        onHighlightCriterion={setTutorHighlight}
       />
     </div>
   );
@@ -554,14 +611,17 @@ function ScreenView({
                 {screen.options.map((opt, i) => {
                   const selected = episode.quizChoice === i;
                   const isAnswer = i === screen.answer;
+                  const highlighted = highlightCriterion === `opt-${i}`;
                   const border =
                     success && isAnswer
                       ? "var(--success)"
                       : showResult && selected && !isAnswer
                         ? "var(--warning)"
-                        : selected
-                          ? "var(--brand)"
-                          : "var(--border)";
+                        : highlighted
+                          ? "var(--info)"
+                          : selected
+                            ? "var(--brand)"
+                            : "var(--border)";
                   const background =
                     success && isAnswer
                       ? "color-mix(in srgb, var(--success) 12%, transparent)"
@@ -578,13 +638,15 @@ function ScreenView({
                       aria-checked={selected}
                       disabled={success}
                       onClick={() => dispatch({ t: "CHOOSE", index: i })}
+                      data-tutor-target={`opt-${i}`}
                       className="relative text-left text-[14px] px-4 py-3"
                       style={{
                         borderRadius: "var(--radius-action)",
                         border: `2px solid ${border}`,
                         background,
                         opacity: dimmed ? 0.55 : 1,
-                        transition: "border-color var(--dur-instant), opacity var(--dur-fast)",
+                        boxShadow: highlighted ? "0 0 0 3px color-mix(in srgb, var(--info) 25%, transparent)" : undefined,
+                        transition: "border-color var(--dur-instant), opacity var(--dur-fast), box-shadow var(--dur-fast)",
                       }}
                     >
                       {opt}

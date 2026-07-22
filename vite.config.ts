@@ -30,6 +30,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    // Keep tutor Python envs out of the Vite watcher (ADK ships HTML that otherwise triggers reloads).
+    watch: {
+      ignored: ['**/tutor-service/.venv*/**', '**/tutor-service/**/site-packages/**'],
+    },
+  },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
