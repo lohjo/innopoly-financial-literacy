@@ -1,11 +1,13 @@
 ---
 title: "Agent prompt v1 — Seamless path: current Finfy → Brilliant UX + Finn/quiz workflows"
 type: prompt
-status: ready
+status: superseded-for-brilliant-recreation
 date: 2026-07-18
 version: v1
 model_target: Cursor Agent / Claude (implementation session)
 temperature_guidance: 0 for machines/math; default for UI polish
+superseded_by_for_brilliant_png_recreation: docs/plans/2026-07-22-002-brilliant-frontend-recreation-prompt.md
+still_valid_for: Finfy jade shell polish + Brilliant motion on CoursePlayer (not purple skin clone)
 sources:
   - docs/audit/brilliant-references-png/
   - docs/audit/finfy-references-png/
@@ -16,6 +18,8 @@ sources:
 ---
 
 # Agent prompt v1 — Seamless Brilliant UX + Finn / quiz workflows
+
+> **Scope note (2026-07-22):** For a **frontend-only recreation of** `docs/audit/brilliant-references-png/` (Brilliant look & surfaces, not Finfy jade), use **`docs/plans/2026-07-22-002-brilliant-frontend-recreation-prompt.md`** instead. Keep this prompt when evolving the **shipping Finfy** app (jade brand + Brilliant interaction quality).
 
 Copy everything inside the `PROMPT` fence into a new Cursor Agent session. Do not edit the fence contents ad hoc; bump `version` and changelog instead.
 

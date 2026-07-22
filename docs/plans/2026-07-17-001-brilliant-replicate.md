@@ -18,6 +18,8 @@ relationship: >
 
 # Financial Literacy — Brilliant-class Interactive Course
 
+> **Agent prompt (2026-07-22):** For a copy-pasteable **frontend-only recreation** of `docs/audit/brilliant-references-png/`, use [`2026-07-22-002-brilliant-frontend-recreation-prompt.md`](./2026-07-22-002-brilliant-frontend-recreation-prompt.md). This file remains the long-form course/content specification.
+
 **Internal design specification** for product designers, learning scientists, frontend engineers, motion designers, and AI engineers building the flagship onboarding course of finfy-literacy.
 
 **Audience:** new graduates (21–27) receiving their first paycheck. Singapore-first market (CPF chapter; SGD throughout). All figures in lessons are *simulated parameters*, never advice (MR-8, scope boundaries).

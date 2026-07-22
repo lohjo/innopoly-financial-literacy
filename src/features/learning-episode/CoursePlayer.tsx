@@ -20,6 +20,7 @@ import { copilotReducer, initCopilot, praiseLine, STALL_MS, type CopilotState } 
 import { executeToolCommand, type CopilotToolCommand, type TutorAnnotation } from "../copilot/toolExecutor";
 import { TutorPointer } from "../copilot/TutorPointer";
 import { StudyCopilot } from "../copilot/StudyCopilot";
+import type { TutorContext } from "../copilot/live/useLiveTutor";
 import { FinnAvatar } from "../copilot/FinnAvatar";
 import { getState, recordEvidence, awardXp, touchStreak, setState as setStore, unlockAchievement, useStore } from "../../stores/store";
 
@@ -213,6 +214,20 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
       }),
     [openHint],
   );
+
+  /* live tutor context: WIP voice tutor reads the current puzzle/quiz/predict beat */
+  const tutorContext: TutorContext | undefined = useMemo(() => {
+    if (screen.kind !== "puzzle" && screen.kind !== "quiz" && screen.kind !== "predict") return undefined;
+    return {
+      lesson_id: lesson.id,
+      screen_id: screen.id,
+      prompt: screen.kind === "puzzle" ? screen.puzzle.prompt : screen.prompt,
+      criteria: screen.kind === "puzzle" ? screen.puzzle.criteria.map((c) => ({ id: c.id, label: c.label, state: episode.criteria[c.id] ?? "pending" })) : [],
+      status: episode.status,
+      failed_criteria: Object.entries(episode.criteria).filter(([, s]) => s === "fail").map(([id]) => id),
+      hint_level: Math.min(2, episode.hintLevelUsed),
+    };
+  }, [lesson.id, screen, episode.status, episode.criteria, episode.hintLevelUsed]);
 
   /* H2 ("point to what matters") highlights the authored target for this screen */
   useEffect(() => {
@@ -469,6 +484,8 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
         onHintDone={hintDone}
         onTeachDone={teachDone}
         misconception={activeMisconception}
+        tutorContext={tutorContext}
+        onHighlightCriterion={setTutorHighlight}
       />
     </div>
   );

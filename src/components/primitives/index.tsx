@@ -151,6 +151,29 @@ export function Card({
   );
 }
 
+/** Read-only XP gain chip (V7 flight target; parent owns travel motion). */
+export function XPChip({ amount }: { amount: number }) {
+  return (
+    <span
+      className="inline-flex items-center shrink-0 tnum"
+      style={{
+        height: 22,
+        borderRadius: 999,
+        padding: "0 8px",
+        background: "color-mix(in srgb, var(--success) 16%, transparent)",
+        color: "var(--success)",
+        fontWeight: 800,
+        fontSize: 12,
+        lineHeight: 1,
+        boxShadow: "var(--shadow-1)",
+      }}
+      aria-hidden
+    >
+      +{amount}
+    </span>
+  );
+}
+
 /** Segmented lesson progress (spec §7.4: segmented for lesson steps). */
 export function SegmentedProgress({ total, current }: { total: number; current: number }) {
   return (

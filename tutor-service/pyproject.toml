@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "finfy-live-tutor"
+version = "0.1.0"
+description = "Single-agent, hint-only Gemini Live tutor for Finfy lessons"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "google-adk>=1.20.0",
+  "python-dotenv>=1.0.0",
+  "uvicorn[standard]>=0.32.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

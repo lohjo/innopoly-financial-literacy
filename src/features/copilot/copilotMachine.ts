@@ -3,7 +3,7 @@
 
 export type CopilotState =
   | { s: "idle" }
-  | { s: "observing"; offer: 0 | 1 | 2 | 3 | 4 } // offer > 0: Finn offers (never auto-opens) a hint
+  | { s: "observing"; offer: 0 | 1 | 2 } // offer > 0: Finn offers (never auto-opens) a hint
   | { s: "waiting" }
   | { s: "hinting"; level: 1 | 2 | 3 | 4 }
   | { s: "teaching"; misconceptionId: string }
@@ -52,7 +52,7 @@ export function copilotReducer(state: CopilotState, e: CopilotEvent): CopilotSta
       if (e.misconceptionId) return { s: "teaching", misconceptionId: e.misconceptionId };
       // two failures on the same criterion → offer next hint level (spec §2.4)
       if (e.sameCriterionFails >= 2) {
-        const next = Math.min(4, e.hintLevelUsed + 1) as 1 | 2 | 3 | 4;
+        const next = Math.min(2, e.hintLevelUsed + 1) as 1 | 2;
         return { s: "observing", offer: next };
       }
       return { s: "observing", offer: 0 };
