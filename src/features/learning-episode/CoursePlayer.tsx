@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, X } from "lucide-react";
 import confetti from "canvas-confetti";
-import type { LessonDoc, PuzzleParams } from "./types";
+import type { DistributeParams, LessonDoc, PuzzleParams } from "./types";
 import { detectMisconception, episodeReducer, initEpisode, type EpisodeAction, type EpisodeState } from "./episodeMachine";
 import { CheckFrame, frameMode, type CheckFrameMode } from "./CheckFrame";
 import { lessonXp, REVIEW_XP, SCREEN_XP, sessionXp } from "./xp";
@@ -12,6 +12,7 @@ import { buildReviewLesson, lessonById } from "../../content/lessons";
 import { CHAPTERS } from "../../content/chapters";
 import { Pill, PrimaryButton, SecondaryButton, SegmentedProgress, Num } from "../../components/primitives";
 import { SimulationCanvas } from "../../components/financial/SimulationCanvas";
+import { ObserveCanvas } from "../../components/financial/ObserveCanvas";
 import { PredictionPanel } from "../../components/financial/PredictionPanel";
 import { defaultAnswer, evaluatePuzzle, type SimAnswer } from "../../components/financial/evaluate";
 import { copilotReducer, initCopilot, praiseLine, STALL_MS, type CopilotState } from "../copilot/copilotMachine";
@@ -173,6 +174,20 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
     }
   }, [screen, answers, paramsOverride, episode, lesson, armStall]);
 
+  /* timing mechanic: auto-pass once the stepped reveal finishes (no Check tap) */
+  useEffect(() => {
+    if (screen?.kind !== "puzzle") return;
+    const params = paramsOverride[screen.id] ?? screen.puzzle.params;
+    if (params.mechanic !== "timing") return;
+    if (episode.status === "success") return;
+    const answer = answers[screen.id];
+    if (!answer || answer.mechanic !== "timing") return;
+    const results = evaluatePuzzle({ ...screen.puzzle, params }, answer);
+    if (!results.every((r) => r.pass)) return;
+    rawDispatch({ t: "CHECK", results });
+    copilotDispatch({ t: "CHECK_PASS" });
+  }, [screen, answers, paramsOverride, episode.status]);
+
   const openHint = useCallback(
     (level: 1 | 2 | 3 | 4) => {
       rawDispatch({ t: "OPEN_HINT", level });
@@ -276,10 +291,18 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
   }
 
   /* --- main player chrome --- */
+  const isTimingPuzzle =
+    screen.kind === "puzzle" && (paramsOverride[screen.id] ?? screen.puzzle.params).mechanic === "timing";
   const canContinue =
-    screen.kind === "intro" || screen.kind === "concept" || screen.kind === "generalize" || episode.status === "success";
+    screen.kind === "intro" ||
+    screen.kind === "concept" ||
+    screen.kind === "generalize" ||
+    screen.kind === "observe" ||
+    episode.status === "success";
   const mode = frameMode(episode.status, evaluating);
-  const checkSuccess = (screen.kind === "puzzle" || screen.kind === "quiz") && episode.status === "success";
+  const checkSuccess =
+    (screen.kind === "puzzle" || screen.kind === "quiz") && episode.status === "success" && !isTimingPuzzle;
+  const continueLabel = screen.kind === "intro" ? "Start" : "Continue";
 
   return (
     <div className="flex flex-col mx-auto w-full max-w-[430px] md:max-w-[640px]" style={{ minHeight: "100dvh" }}>
@@ -347,7 +370,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
       {/* action bar: one primary action per screen (spec §1.2 principle 3) */}
       <div className="fixed bottom-0 inset-x-0 z-30">
         <div className="mx-auto w-full max-w-[430px] md:max-w-[640px] px-4 py-3 flex gap-2" style={{ background: "var(--background)", borderTop: "1px solid var(--border)" }}>
-          {screen.kind === "puzzle" && episode.status !== "success" && (
+          {screen.kind === "puzzle" && episode.status !== "success" && !isTimingPuzzle && (
             <>
               {episode.status === "failure" && (
                 <SecondaryButton onClick={() => openHint(Math.min(4, episode.hintLevelUsed + 1) as 1 | 2 | 3 | 4)} className="!w-auto shrink-0">
@@ -388,7 +411,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
                 </div>
               )}
               <PrimaryButton tone={checkSuccess ? "success" : "brand"} onClick={() => dispatch({ t: "CONTINUE" })}>
-                Continue
+                {continueLabel}
               </PrimaryButton>
             </>
           )}
@@ -451,7 +474,7 @@ function ScreenView({
         <div className="flex flex-col items-center gap-5 pt-8 text-center">
           <FinnAvatar expression="curious" size={72} />
           <h1>{screen.title}</h1>
-          <p className="text-[15px] max-w-[36ch]" style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-[15px] max-w-[36ch] whitespace-pre-line" style={{ color: "var(--muted-foreground)" }}>
             {screen.story}
           </p>
         </div>
@@ -460,7 +483,7 @@ function ScreenView({
       return (
         <div className="flex flex-col gap-3 pt-4">
           <h2>{screen.title}</h2>
-          <p className="text-[15px] leading-relaxed">{screen.body}</p>
+          <p className="text-[15px] leading-relaxed whitespace-pre-line">{screen.body}</p>
           {screen.factNote && (
             <p className="text-[11.5px] px-3 py-2 rounded-[10px]" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>
               {screen.factNote}
@@ -487,6 +510,21 @@ function ScreenView({
       const params = paramsOverride[screen.id] ?? screen.puzzle.params;
       const puzzle = { ...screen.puzzle, params };
       const answer = answers[screen.id] ?? defaultAnswer(puzzle);
+      let compareLumpPrice: number | null = null;
+      if (params.mechanic === "timing" && params.timing.mode === "dca") {
+        const srcId = params.timing.compareSourceScreenId;
+        const srcAns = srcId ? answers[srcId] : undefined;
+        const srcScreen = srcId ? lesson.screens.find((s) => s.id === srcId) : undefined;
+        const srcParams =
+          srcScreen?.kind === "puzzle" ? (paramsOverride[srcScreen.id] ?? srcScreen.puzzle.params) : null;
+        if (srcAns?.mechanic === "timing" && srcAns.pickMonthId && srcParams?.mechanic === "timing") {
+          compareLumpPrice =
+            srcParams.timing.months.find((m) => m.id === srcAns.pickMonthId)?.price ?? null;
+        } else if (params.timing.compareFallbackMonthId) {
+          compareLumpPrice =
+            params.timing.months.find((m) => m.id === params.timing.compareFallbackMonthId)?.price ?? null;
+        }
+      }
       return (
         <div className="pt-4">
           <CheckFrame mode={mode}>
@@ -498,6 +536,7 @@ function ScreenView({
               criteria={episode.criteria}
               criteriaDetail={episode.criteriaDetail}
               highlightCriterion={highlightCriterion}
+              compareLumpPrice={compareLumpPrice}
             />
           </CheckFrame>
         </div>
@@ -613,6 +652,23 @@ function ScreenView({
           )}
         </div>
       );
+    case "observe": {
+      const source = lesson.screens.find((s) => s.id === screen.sourceScreenId);
+      const sourcePuzzle = source?.kind === "puzzle" ? source.puzzle : null;
+      const dist =
+        sourcePuzzle?.params.mechanic === "distribute" ? sourcePuzzle.params.distribute : null;
+      const ans = answers[screen.sourceScreenId];
+      const placement =
+        ans?.mechanic === "distribute" ? ans.placement : dist ? { ...dist.initial } : {};
+      if (!dist) {
+        return (
+          <p className="pt-4 text-[14px]" style={{ color: "var(--muted-foreground)" }}>
+            Missing source placement for this beat.
+          </p>
+        );
+      }
+      return <ObserveCanvas title={screen.title} params={dist as DistributeParams} placement={placement} shock={screen.shock} />;
+    }
     case "generalize":
       return (
         <div className="flex flex-col gap-4 pt-6 items-center text-center">
@@ -622,7 +678,21 @@ function ScreenView({
             </p>
             <h2 style={{ color: "var(--brand-hover)" }}>{screen.rule}</h2>
           </div>
-          <p className="text-[15px] max-w-[40ch] text-left leading-relaxed">{screen.body}</p>
+          <p className="text-[15px] max-w-[40ch] text-left leading-relaxed whitespace-pre-line">{screen.body}</p>
+          {screen.skillUnlock && (
+            <div
+              className="w-full max-w-[36ch] rounded-[var(--radius-card)] p-4 flex flex-col gap-1 text-left"
+              style={{ background: "var(--card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-1)" }}
+            >
+              <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+                New skill unlocked
+              </p>
+              <p className="text-[16px] font-extrabold">🛡 {screen.skillUnlock.label}</p>
+              <p className="text-[13px] font-bold" style={{ color: "var(--brand-hover)" }}>
+                {screen.skillUnlock.xpNote}
+              </p>
+            </div>
+          )}
         </div>
       );
   }

@@ -44,10 +44,116 @@ export type MinPayParams = {
   targets?: { deadlineMonths: number; interestCap: number };
 };
 
+/** Compound-growth explorer: scrub years, compare save-path vs spend-path stacks. */
+export type GrowParams = {
+  monthlySave: number;
+  annualRate: number;
+  maxYears: number;
+  saveLabel: string;
+  spendLabel: string;
+  /** pass when FV(save) − FV(spend) at chosen years ≥ gapTarget */
+  gapTarget: number;
+};
+
+/** Rank items top→bottom (e.g. highest long-run impact first). */
+export type SortParams = {
+  items: { id: string; label: string; detail?: string }[];
+  /** ground-truth order, best/first at index 0 */
+  correctOrder: string[];
+  /** starting order shown to the learner (usually shuffled) */
+  startOrder: string[];
+};
+
+/** Tap-to-pair left items with right outcomes. */
+export type MatchParams = {
+  left: { id: string; label: string }[];
+  right: { id: string; label: string }[];
+  /** leftId → rightId */
+  solution: Record<string, string>;
+};
+
+/** Route paycheck chips into buckets (Save-first vs Leftover). */
+export type AllocateParams = {
+  chips: { id: string; label: string; amount: number }[];
+  buckets: { id: string; label: string; kind: "save" | "spend" }[];
+  /** chipId → bucketId starting placement */
+  initial: Record<string, string>;
+  targets: { minSave: number };
+  /** optional story line shown under the columns after a check failure context */
+  evaporateNote?: string;
+};
+
+/** Spread units (eggs / cash chips) across many baskets or investments. */
+export type DistributeParams = {
+  /** Visual theme for chips + buckets */
+  theme: "eggs" | "money";
+  chips: { id: string; label: string; amount: number }[];
+  buckets: { id: string; label: string }[];
+  /** chipId → bucketId; missing keys start in the pool */
+  initial: Record<string, string>;
+  targets:
+    | { mode: "all-placed" }
+    | {
+        mode: "min-kept";
+        /** which basket breaks on Check — kept = total − amount in this bucket */
+        breakBucketId: string;
+        minKept: number;
+      };
+  /** shown once after the first chip is placed */
+  firstPlaceNudge?: string;
+};
+
+/** Market-timing beat: pick a month (lump sum) or watch fixed monthly buys (DCA). */
+export type TimingMonth = { id: string; label: string; price: number };
+export type TimingParams = {
+  mode: "lump-sum" | "dca";
+  /** total cash available (lump = all at once; dca = monthlyAmount × months) */
+  budget: number;
+  months: TimingMonth[];
+  /** shown after every month has been revealed */
+  feedbackTitle: string;
+  feedbackBody: string;
+  /** dca: dollars invested each month (defaults to budget / months.length) */
+  monthlyAmount?: number;
+  /** dca compare: prior lump-sum screen whose pick supplies the "You" price */
+  compareSourceScreenId?: string;
+  /** dca compare fallback month id when no prior pick is available */
+  compareFallbackMonthId?: string;
+};
+
 export type PuzzleParams =
   | { mechanic: "flow"; flow: FlowParams }
   | { mechanic: "zones"; zones: ZonesParams }
-  | { mechanic: "minpay"; minpay: MinPayParams };
+  | { mechanic: "minpay"; minpay: MinPayParams }
+  | { mechanic: "grow"; grow: GrowParams }
+  | { mechanic: "sort"; sort: SortParams }
+  | { mechanic: "match"; match: MatchParams }
+  | { mechanic: "allocate"; allocate: AllocateParams }
+  | { mechanic: "distribute"; distribute: DistributeParams }
+  | { mechanic: "timing"; timing: TimingParams };
+
+/** Consequence beat driven by a prior distribute puzzle's placement. */
+export type ObserveShock =
+  | {
+      kind: "egg-break";
+      /** pick fullest non-empty basket; fall back to first bucket */
+      pick: "fullest";
+      /** optional: never break this basket (second try uses a different one) */
+      excludeBucketId?: string;
+    }
+  | {
+      kind: "egg-break";
+      pick: "fixed";
+      bucketId: string;
+    }
+  | {
+      kind: "portfolio-drop";
+      bucketId: string;
+      /** fraction of that bucket's share lost (e.g. 0.4) */
+      dropRate: number;
+      /** amount-in-bucket ≥ this → "dropped a lot" copy */
+      heavyThreshold: number;
+    };
 
 export type PuzzleDoc = {
   id: string;
@@ -91,7 +197,22 @@ export type ScreenDoc =
   | { kind: "puzzle"; id: string; puzzle: PuzzleDoc }
   | QuizScreenDoc
   | { kind: "reflect"; id: string; prompt: string; choices: string[]; best: number; whyBest: string }
-  | { kind: "generalize"; id: string; rule: string; body: string };
+  | {
+      kind: "observe";
+      id: string;
+      title: string;
+      /** prior puzzle screen whose distribute placement drives the shock */
+      sourceScreenId: string;
+      shock: ObserveShock;
+    }
+  | {
+      kind: "generalize";
+      id: string;
+      rule: string;
+      body: string;
+      /** celebrate chrome (copy only — XP still awarded via lesson finish) */
+      skillUnlock?: { label: string; xpNote: string };
+    };
 
 export type MisconceptionCard = {
   id: string;

@@ -197,7 +197,8 @@ export function episodeReducer(state: EpisodeState, action: EpisodeAction, lesso
 
     case "CONTINUE": {
       // intro/concept/generalize screens advance freely; interactive screens require success
-      const freeAdvance = screen.kind === "intro" || screen.kind === "concept" || screen.kind === "generalize";
+      const freeAdvance =
+        screen.kind === "intro" || screen.kind === "concept" || screen.kind === "generalize" || screen.kind === "observe";
       if (!freeAdvance && state.status !== "success") return state;
       const nextIndex = state.screenIndex + 1;
       if (nextIndex >= lesson.screens.length) {
