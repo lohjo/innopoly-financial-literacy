@@ -22,6 +22,7 @@ import { TutorPointer } from "../copilot/TutorPointer";
 import { StudyCopilot } from "../copilot/StudyCopilot";
 import type { TutorContext } from "../copilot/live/useLiveTutor";
 import { FinnAvatar } from "../copilot/FinnAvatar";
+import { applyValidatedHighlight, outcomeFromGrade } from "../../agents/gates";
 import { getState, recordEvidence, awardXp, touchStreak, setState as setStore, unlockAchievement, useStore } from "../../stores/store";
 
 export function CoursePlayer({ review = false }: { review?: boolean }) {
@@ -150,6 +151,10 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
     [rawDispatch, screen, armStall],
   );
 
+  /* --- tutor tool seam: UI commands (Live + gates) — declare before Check so highlights can fire --- */
+  const [tutorHighlight, setTutorHighlight] = useState<string | null>(null);
+  const [tutorAnnotation, setTutorAnnotation] = useState<TutorAnnotation | null>(null);
+
   /* --- check handler for puzzles --- */
   const handleCheck = useCallback(() => {
     if (screen?.kind !== "puzzle") return;
@@ -157,12 +162,22 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
     const answer = answers[screen.id] ?? defaultAnswer({ ...screen.puzzle, params });
     const results = evaluatePuzzle({ ...screen.puzzle, params }, answer);
     rawDispatch({ t: "CHECK", results });
-    const allPass = results.every((r) => r.pass);
-    if (allPass) {
+    // Gate bus: outcome_response then ui_highlight (never model-chosen).
+    const outcome = outcomeFromGrade(results);
+    const allowed = screen.puzzle.criteria.map((c) => c.id);
+    if (outcome.mode === "success") {
+      applyValidatedHighlight({ action: "clear_highlight" }, allowed, setTutorHighlight);
       copilotDispatch({ t: "CHECK_PASS" });
     } else {
-      // compute post-check fail counts for the copilot policy
       const failed = results.filter((r) => !r.pass);
+      const focusId = outcome.failedCriteria[0] ?? failed[0]?.id;
+      if (focusId) {
+        applyValidatedHighlight(
+          { action: "highlight_criterion", criterionId: focusId },
+          allowed,
+          setTutorHighlight,
+        );
+      }
       const maxFails = Math.max(...failed.map((r) => (episode.failsByCriterion[r.id] ?? 0) + 1));
       const misId = detectMisconception(
         {
@@ -189,6 +204,7 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
     const results = evaluatePuzzle({ ...screen.puzzle, params }, answer);
     if (!results.every((r) => r.pass)) return;
     rawDispatch({ t: "CHECK", results });
+    applyValidatedHighlight({ action: "clear_highlight" }, screen.puzzle.criteria.map((c) => c.id), setTutorHighlight);
     copilotDispatch({ t: "CHECK_PASS" });
   }, [screen, answers, paramsOverride, episode.status]);
 
@@ -201,9 +217,6 @@ function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {
     [rawDispatch],
   );
 
-  /* --- tutor tool seam: every UI command (mock today, live later) runs through one executor --- */
-  const [tutorHighlight, setTutorHighlight] = useState<string | null>(null);
-  const [tutorAnnotation, setTutorAnnotation] = useState<TutorAnnotation | null>(null);
   const runTool = useCallback(
     (cmd: CopilotToolCommand) =>
       executeToolCommand(cmd, {

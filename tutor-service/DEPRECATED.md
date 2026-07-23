@@ -1,17 +1,12 @@
-# Deprecated — Python Live tutor
+# Note on dual Live runtimes
 
-This FastAPI + Google ADK service is **deprecated** as the required local runtime.
+**ADK + Gemini Live (`tutor-service/`) remains a supported Live root** — see `README.md`.
 
-**Use instead:** `server/tutor/` (TypeScript), started by `pnpm run dev`.
+The TypeScript server at `server/tutor/` is a protocol-compatible twin (same contracts/policy/tools) for single-command Node DX. Prefer:
 
-**Rollback** (if TS Live breaks):
+| Goal | Runtime |
+| --- | --- |
+| Canonical ADK Live pattern / Vertex ADK parity | `TUTOR_RUNTIME=adk` |
+| Pure TS / no Python venv | `TUTOR_RUNTIME=ts` (default when `.venv` missing) |
 
-```bash
-cd tutor-service
-# activate .venv if present
-uvicorn app.main:app --reload --port 8080
-```
-
-Point the app at `VITE_TUTOR_WS_URL=ws://localhost:8080/ws` (bypass the Vite `/tutor-ws` proxy).
-
-Delete this directory only with explicit maintainer approval.
+Do not delete this directory without maintainer approval — it is the ADK reference implementation.

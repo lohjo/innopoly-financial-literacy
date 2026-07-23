@@ -42,9 +42,9 @@ Verified by direct inspection on 2026-07-18 (post-rebuild):
 
 From `package.json` (package name `finfy-literacy`; use `pnpm`):
 
-- `pnpm dev` — Vite app **and** TypeScript Live tutor server (`server/tutor`, default `:8080`). Set `TUTOR_DISABLED=1` for Vite-only. See `.env.example`.
+- `pnpm dev` — Vite app **and** Live tutor (`TUTOR_RUNTIME=auto|adk|ts`). **ADK + Gemini Live** (`tutor-service`) when `.venv` exists; else TS twin (`server/tutor`). `TUTOR_DISABLED=1` for Vite-only. See `.env.example`.
 - `pnpm dev:app` — Vite only.
-- `pnpm tutor` — TS tutor server only (`tsx server/tutor/index.ts`).
+- `pnpm tutor` — TS tutor twin only (`tsx server/tutor/index.ts`).
 - `pnpm build` — production build.
 - `pnpm typecheck` — `tsc --noEmit` for the app + `server/tutor` (strict; draft/Python dirs excluded via `tsconfig.json`).
 - `pnpm test` — vitest (gates, runtime, tutor contracts/policy, sim math, episode/copilot machines, BKT/scheduling, content solvability, scenario-graph reachability).
