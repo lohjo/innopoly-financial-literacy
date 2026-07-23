@@ -24,6 +24,7 @@ import type { TutorContext } from "../copilot/live/useLiveTutor";
 import { FinnAvatar } from "../copilot/FinnAvatar";
 import { applyValidatedHighlight, outcomeFromGrade } from "../../agents/gates";
 import { getState, recordEvidence, awardXp, touchStreak, setState as setStore, unlockAchievement, useStore } from "../../stores/store";
+import { LessonEntryGate } from "./lesson-loader";
 
 export function CoursePlayer({ review = false }: { review?: boolean }) {
   const { lessonId, conceptId } = useParams();
@@ -40,7 +41,11 @@ export function CoursePlayer({ review = false }: { review?: boolean }) {
       </div>
     );
   }
-  return <Player lesson={lesson} review={review} />;
+  return (
+    <LessonEntryGate>
+      <Player lesson={lesson} review={review} />
+    </LessonEntryGate>
+  );
 }
 
 function Player({ lesson, review }: { lesson: LessonDoc; review: boolean }) {

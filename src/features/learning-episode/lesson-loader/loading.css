@@ -1,0 +1,34 @@
+/**
+ * loading.css — flat presentation for the lesson entry loader.
+ * Motion handles animation; this file only owns static layout/colors.
+ */
+
+.loading-root {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #eef8f1;
+  isolation: isolate;
+}
+
+.loading-contact-shadow {
+  background: rgba(20, 83, 45, 0.18);
+}
+
+.loading-particle-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-root * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

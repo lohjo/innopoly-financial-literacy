@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { AppShell } from "./AppShell";
 import { useStore } from "../stores/store";
+import LessonLoadingScreen from "../features/learning-episode/lesson-loader/LoadingScreen";
 
 const CoursePlayer = lazy(() =>
   import("../features/learning-episode/CoursePlayer").then((m) => ({ default: m.CoursePlayer })),
@@ -64,7 +65,7 @@ export function AppRouter() {
         <Route
           path="/learn/:lessonId"
           element={
-            <Suspense fallback={<FullScreenFallback />}>
+            <Suspense fallback={<LessonLoadingScreen />}>
               <CoursePlayer />
             </Suspense>
           }
@@ -72,7 +73,7 @@ export function AppRouter() {
         <Route
           path="/review/:conceptId"
           element={
-            <Suspense fallback={<FullScreenFallback />}>
+            <Suspense fallback={<LessonLoadingScreen />}>
               <CoursePlayer review />
             </Suspense>
           }
