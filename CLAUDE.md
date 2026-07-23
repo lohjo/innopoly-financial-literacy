@@ -25,7 +25,7 @@ Verified by direct inspection on 2026-07-18 (post-rebuild):
 | `src/stores/` | `store.ts` — versioned localStorage store (`finfy.v1`), `useSyncExternalStore` hook, append-only evidence ledger, per-class memory reset, dev clock offset. |
 | `src/styles/` | `index.css` → `fonts.css` (Nunito Sans, Google-hosted — self-host before production), `tailwind.css` (Tailwind 4 CSS-first), `theme.css` (jade+ink+warm-paper tokens per spec §7.2, light + `.dark`, motion/elevation/radius tokens, `@theme inline` mapping). |
 | `src/imports/` | Figma-exported frames (`Frame87`, `Frame166`, …) and `fingo-*.png` reference images. Generated assets — do not hand-refactor. |
-| `src/agents/` | **Draft, not wired to the app.** Python Google ADK `financial_coordinator` (`gemini-2.5-pro`) with data/trading/execution/risk sub-agents — sample-style code. No Python project config (no `pyproject.toml`/`requirements.txt`) exists in the repo. |
+| `src/agents/` | **Production TS path:** `gates/` (four tutor reaction gates) + `runtime/` (`runManagedAgent` + verifier). **Draft quarantine:** `_draft_python/` (former brokerage ADK coordinator — do not wire). See `src/agents/README.md`. |
 | `src/db/` | **Draft, leftover from a prior product.** Drizzle schema/client/seed referencing `student_id` RLS and a `docs/plans/_archive/...` path that does not exist in this repo. Drizzle is not in `package.json` dependencies. |
 | `src/server/` | Empty (`.gitkeep` only). |
 | `src/routes/` | Empty (`.gitkeep` only, including `routes/api/`). |
@@ -42,12 +42,16 @@ Verified by direct inspection on 2026-07-18 (post-rebuild):
 
 From `package.json` (package name `finfy-literacy`; use `pnpm`):
 
-- `pnpm dev` — Vite dev server.
+- `pnpm dev` — Vite app **and** TypeScript Live tutor server (`server/tutor`, default `:8080`). Set `TUTOR_DISABLED=1` for Vite-only. See `.env.example`.
+- `pnpm dev:app` — Vite only.
+- `pnpm tutor` — TS tutor server only (`tsx server/tutor/index.ts`).
 - `pnpm build` — production build.
-- `pnpm typecheck` — `tsc --noEmit` (strict; `src/components/ui` and draft dirs excluded via `tsconfig.json`).
-- `pnpm test` — vitest (61 tests: sim math, episode/copilot/call machines, BKT/scheduling, content solvability, scenario-graph reachability).
+- `pnpm typecheck` — `tsc --noEmit` for the app + `server/tutor` (strict; draft/Python dirs excluded via `tsconfig.json`).
+- `pnpm test` — vitest (gates, runtime, tutor contracts/policy, sim math, episode/copilot machines, BKT/scheduling, content solvability, scenario-graph reachability).
 
 **Missing scripts:** no `lint`, `format`, or `preview`. Standard validation after changes: `pnpm typecheck && pnpm test && pnpm build`.
+
+**Live tutor notes (verified 2026-07-23):** optional Gemini keys (`GEMINI_API_KEY` / `GOOGLE_API_KEY`). Without keys, `/healthz` reports `degraded` and the literacy app still teaches via authored hints + deterministic Check. Python `tutor-service/` is deprecated rollback only. TS agent path: `src/agents/gates/`, `src/agents/runtime/`, `server/tutor/`.
 
 Pinned tooling: Vite `6.3.5` (pnpm-overridden), Tailwind `4.1.12` (CSS-first, no tailwind.config), React `18.3.1` (real dependency since 2026-07-18), react-router `7.13.0`, motion `12`, TypeScript `5.6`, vitest `3`. `pnpm-workspace.yaml` pins `supportedArchitectures` (linux + win32 + darwin).
 
@@ -56,8 +60,8 @@ Pinned tooling: Vite `6.3.5` (pnpm-overridden), Tailwind `4.1.12` (CSS-first, no
 - Inspect the relevant files before editing them; do not act on documentation claims alone.
 - Preserve existing behavior unless the user explicitly requests a behavior change.
 - Treat everything under `docs/plans/` and `docs/brainstorms/` as design intent, **not** implemented functionality.
-- Treat `src/agents/`, `src/db/`, `src/server/`, `src/routes/`, `api/`, and `scripts/ablate.ts` as non-production drafts unless inspection proves otherwise.
-- Do not invent backend contracts, database schemas, environment variables, or integrations. None are live; `src/db/schema.ts` and `api/index.ts` are not contracts.
+- Treat `src/agents/_draft_python/`, `src/db/`, empty `src/server/`, `src/routes/`, `api/`, and `scripts/ablate.ts` as non-production drafts unless inspection proves otherwise. `src/agents/gates/`, `src/agents/runtime/`, and `server/tutor/` are the live TypeScript agent/tutor path.
+- Do not invent Postgres/Drizzle/tenancy or brokerage contracts. Tutor env vars are documented in `.env.example`; `src/db/schema.ts` and `api/index.ts` are not contracts.
 - Keep concerns where they already live: feature logic in `src/features/` (state machines and money math are pure, React-free, and tested), shared UI in `src/components/primitives` + `src/components/financial`, authored content in `src/content/` (never hardcode lesson/scenario data in components), persistence only via `src/stores/store.ts`, styles/tokens in `src/styles/theme.css`, generated Figma output in `src/imports/`, docs in `docs/`.
 - Deterministic code owns grading, simulation, rewards, and mastery (spec §11.2). Do not add model calls into those paths; AI seams belong behind typed service modules.
 - New lessons/scenarios must pass the content gates: solvable puzzles (`content.test.ts`) and fully-reachable, terminating scenario graphs (`scenarios.test.ts`).
@@ -67,4 +71,4 @@ Pinned tooling: Vite `6.3.5` (pnpm-overridden), Tailwind `4.1.12` (CSS-first, no
 - After changes, run the narrowest relevant validation available (`pnpm typecheck && pnpm test && pnpm build`).
 - When finishing a task, report the list of changed files and the validation results (including "no automated validation exists" when true).
 
-Last verified: 2026-07-18
+Last verified: 2026-07-23 (agent infra / tutor DX scripts)

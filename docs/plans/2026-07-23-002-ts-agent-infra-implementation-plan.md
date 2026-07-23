@@ -1,6 +1,7 @@
 # 2026-07-23-002 — TypeScript agent infra implementation plan
 
-Status: active implementation plan for the hierarchical Live-root + deterministic tutor gate bus.
+Status: **implemented on branch `cursor/ts-agent-infra-2a84` (2026-07-23)** — Phases 0–4 landed.
+Smoke: `pnpm run dev` → Vite `:5173` + tutor `:8080` `/healthz` `degraded` without Gemini keys.
 
 ## 1. Recon notes
 

@@ -19,12 +19,9 @@
   },
   "include": ["src"],
   "exclude": [
-    "src/agents/finfy-agent",
     "src/agents/_draft_python",
-    "src/agents/eval",
     "src/agents/deployment",
     "src/agents/tools",
-    "src/agents/tests",
     "src/db",
     "src/engine",
     "src/server",

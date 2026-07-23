@@ -16,6 +16,17 @@ type RenderCommand = { layer?: string; action?: string; criterion_id?: string };
 type LiveTutorStatus = "idle" | "connecting" | "ready" | "listening" | "speaking" | "error";
 type Options = { onCommand?: (command: RenderCommand) => void };
 
+/** Accept layered tutor_render commands or raw tool args (action/criterion_id). */
+function normalizeRenderCommand(command: RenderCommand): RenderCommand {
+  const action = command.action;
+  if (!action) return command;
+  return {
+    layer: command.layer ?? "lesson_tutor",
+    action,
+    criterion_id: command.criterion_id,
+  };
+}
+
 const TUTOR_URL = import.meta.env.VITE_TUTOR_WS_URL as string | undefined;
 const TUTOR_TOKEN = import.meta.env.VITE_TUTOR_ACCESS_TOKEN as string | undefined;
 const SESSION_STORAGE_KEY = "finfy-live-tutor-session";
@@ -205,8 +216,14 @@ export function useLiveTutor({ onCommand }: Options = {}) {
           setError(event.message);
           return;
         }
-        if (event.type === "live_ready" || event.type === "context_ready") {
+        // Mic ungated only when Live is truly ready — not in degraded (no API key) mode.
+        if (event.type === "live_ready" && event.config !== "degraded") {
           liveReadyRef.current = true;
+        }
+        // Typed render command from TS tutor server (and dual-read with legacy ADK shapes).
+        if (event.type === "tutor_render") {
+          const command = event.command as RenderCommand | undefined;
+          if (command) onCommandRef.current?.(normalizeRenderCommand(command));
         }
         const output = (event.outputTranscription ?? event.output_transcription) as { text?: unknown } | undefined;
         if (typeof output?.text === "string" && output.text.trim()) {
@@ -225,7 +242,7 @@ export function useLiveTutor({ onCommand }: Options = {}) {
           const functionCall = (part.functionCall ?? part.function_call) as { name?: unknown; args?: unknown; arguments?: unknown } | undefined;
           if (functionCall?.name === "render_hint_focus") {
             const command = (functionCall.args ?? functionCall.arguments) as RenderCommand | undefined;
-            if (command?.layer === "lesson_tutor") onCommandRef.current?.(command);
+            if (command) onCommandRef.current?.(normalizeRenderCommand(command));
           }
         }
         if (event.turnComplete ?? event.turn_complete) setStatus("ready");
