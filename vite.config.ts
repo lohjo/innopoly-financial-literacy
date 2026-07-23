@@ -35,6 +35,15 @@ export default defineConfig({
     watch: {
       ignored: ['**/tutor-service/.venv*/**', '**/tutor-service/**/site-packages/**'],
     },
+    proxy: {
+      // Local DX: browser connects to ws://localhost:5173/tutor-ws/... → TS tutor :8080/ws/...
+      '/tutor-ws': {
+        target: 'ws://localhost:8080',
+        ws: true,
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/tutor-ws/, '/ws'),
+      },
+    },
   },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.

@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { voicePhaseFor, type LiveTutorStatus, type TutorVoicePhase } from "./voicePhase";
+
+export type { TutorVoicePhase } from "./voicePhase";
+export { voicePhaseFor } from "./voicePhase";
 
 export type TutorCriterion = { id: string; label: string; state: "pending" | "pass" | "fail" };
 
@@ -13,10 +17,27 @@ export type TutorContext = {
 };
 
 type RenderCommand = { layer?: string; action?: string; criterion_id?: string };
-type LiveTutorStatus = "idle" | "connecting" | "ready" | "listening" | "speaking" | "error";
-type Options = { onCommand?: (command: RenderCommand) => void };
+type Options = {
+  onCommand?: (command: RenderCommand) => void;
+  /** Barge-in: clear in-flight bubble/highlight when the learner starts speaking/asking. */
+  onBargeIn?: () => void;
+};
 
-const TUTOR_URL = import.meta.env.VITE_TUTOR_WS_URL as string | undefined;
+/** Accept layered tutor_render commands or raw tool args (action/criterion_id). */
+function normalizeRenderCommand(command: RenderCommand): RenderCommand {
+  const action = command.action;
+  if (!action) return command;
+  return {
+    layer: command.layer ?? "lesson_tutor",
+    action,
+    criterion_id: command.criterion_id,
+  };
+}
+
+// Dev default hits the Vite /tutor-ws proxy so StudyCopilot Ask/Mic work without a hand-written .env.
+const TUTOR_URL =
+  (import.meta.env.VITE_TUTOR_WS_URL as string | undefined) ||
+  (import.meta.env.DEV ? "ws://localhost:5173/tutor-ws" : undefined);
 const TUTOR_TOKEN = import.meta.env.VITE_TUTOR_ACCESS_TOKEN as string | undefined;
 const SESSION_STORAGE_KEY = "finfy-live-tutor-session";
 
@@ -60,7 +81,7 @@ function socketUrl(): string | null {
   return `${TUTOR_URL.replace(/\/$/, "")}/browser-${stableId(`${SESSION_STORAGE_KEY}-learner`)}/${stableId(SESSION_STORAGE_KEY)}`;
 }
 
-export function useLiveTutor({ onCommand }: Options = {}) {
+export function useLiveTutor({ onCommand, onBargeIn }: Options = {}) {
   const wsRef = useRef<WebSocket | null>(null);
   const connectingRef = useRef<Promise<boolean> | null>(null);
   const contextRef = useRef<TutorContext | null>(null);
@@ -68,6 +89,7 @@ export function useLiveTutor({ onCommand }: Options = {}) {
   const askingRef = useRef(false);
   const liveReadyRef = useRef(false);
   const onCommandRef = useRef(onCommand);
+  const onBargeInRef = useRef(onBargeIn);
   const recorderContextRef = useRef<AudioContext | null>(null);
   const playerContextRef = useRef<AudioContext | null>(null);
   const recorderNodeRef = useRef<AudioWorkletNode | null>(null);
@@ -78,6 +100,7 @@ export function useLiveTutor({ onCommand }: Options = {}) {
   const [transcript, setTranscript] = useState<string | null>(null);
 
   useEffect(() => { onCommandRef.current = onCommand; }, [onCommand]);
+  useEffect(() => { onBargeInRef.current = onBargeIn; }, [onBargeIn]);
 
   const stopListening = useCallback(() => {
     recorderNodeRef.current?.disconnect();
@@ -205,8 +228,14 @@ export function useLiveTutor({ onCommand }: Options = {}) {
           setError(event.message);
           return;
         }
-        if (event.type === "live_ready" || event.type === "context_ready") {
+        // Mic ungated only when Live is truly ready — not in degraded (no API key) mode.
+        if (event.type === "live_ready" && event.config !== "degraded") {
           liveReadyRef.current = true;
+        }
+        // Typed render command from TS tutor server (and dual-read with legacy ADK shapes).
+        if (event.type === "tutor_render") {
+          const command = event.command as RenderCommand | undefined;
+          if (command) onCommandRef.current?.(normalizeRenderCommand(command));
         }
         const output = (event.outputTranscription ?? event.output_transcription) as { text?: unknown } | undefined;
         if (typeof output?.text === "string" && output.text.trim()) {
@@ -225,7 +254,7 @@ export function useLiveTutor({ onCommand }: Options = {}) {
           const functionCall = (part.functionCall ?? part.function_call) as { name?: unknown; args?: unknown; arguments?: unknown } | undefined;
           if (functionCall?.name === "render_hint_focus") {
             const command = (functionCall.args ?? functionCall.arguments) as RenderCommand | undefined;
-            if (command?.layer === "lesson_tutor") onCommandRef.current?.(command);
+            if (command) onCommandRef.current?.(normalizeRenderCommand(command));
           }
         }
         if (event.turnComplete ?? event.turn_complete) setStatus("ready");
@@ -239,6 +268,9 @@ export function useLiveTutor({ onCommand }: Options = {}) {
   const startListening = useCallback(async () => {
     if (!(await connect())) return false;
     if (recorderNodeRef.current) return true;
+    // Clicky barge-in: cancel in-flight speech/UI when the learner starts talking.
+    onBargeInRef.current?.();
+    setTranscript(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
       const context = new AudioContext({ sampleRate: 16000 });
@@ -274,6 +306,8 @@ export function useLiveTutor({ onCommand }: Options = {}) {
     if (!content.trim() || !ws || ws.readyState !== WebSocket.OPEN || !contextRef.current) return false;
     if (askingRef.current) return false;
     askingRef.current = true;
+    onBargeInRef.current?.();
+    setTranscript(null);
     // Context is state-only on the server; send at most once per change, then one text turn.
     sendContext();
     ws.send(JSON.stringify({ type: "text", content: content.trim().slice(0, 500) }));
@@ -285,5 +319,16 @@ export function useLiveTutor({ onCommand }: Options = {}) {
     return true;
   }, [sendContext]);
 
-  return { available: Boolean(TUTOR_URL), status, error, transcript, activate, ask, setContext, stopListening, startListening };
+  return {
+    available: Boolean(TUTOR_URL),
+    status,
+    voicePhase: voicePhaseFor(status),
+    error,
+    transcript,
+    activate,
+    ask,
+    setContext,
+    stopListening,
+    startListening,
+  };
 }

@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite",
-    "typecheck": "tsc --noEmit",
+    "dev": "node scripts/dev.mjs",
+    "dev:app": "vite",
+    "tutor": "tsx server/tutor/index.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p server/tutor/tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
+    "@google/genai": "^2.13.0",
     "@mui/icons-material": "7.3.5",
     "@mui/material": "7.3.5",
     "@popperjs/core": "2.11.8",
@@ -66,16 +69,21 @@
     "sonner": "2.0.3",
     "tailwind-merge": "3.2.0",
     "tw-animate-css": "1.3.8",
-    "vaul": "1.1.2"
+    "vaul": "1.1.2",
+    "ws": "^8.21.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@types/canvas-confetti": "1.9.0",
+    "@types/node": "^26.1.1",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "4.7.0",
     "playwright": "1.61.1",
     "tailwindcss": "4.1.12",
+    "tsx": "^4.23.1",
     "typescript": "5.6.3",
     "vite": "6.3.5",
     "vitest": "3.2.4"

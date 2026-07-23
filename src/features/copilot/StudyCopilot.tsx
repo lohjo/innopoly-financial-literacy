@@ -40,20 +40,22 @@ function liveExpression(
   return fallback;
 }
 
-function liveStatusLabel(status: ReturnType<typeof useLiveTutor>["status"]): string | null {
-  switch (status) {
-    case "connecting":
-      return "Connecting…";
+function liveStatusLabel(
+  status: ReturnType<typeof useLiveTutor>["status"],
+  voicePhase: ReturnType<typeof useLiveTutor>["voicePhase"],
+): string | null {
+  // Prefer Clicky-shaped phase labels when Live is active.
+  if (status === "error") return "Unavailable";
+  if (status === "idle") return null;
+  switch (voicePhase) {
     case "listening":
       return "Listening…";
-    case "speaking":
+    case "processing":
+      return "Thinking…";
+    case "responding":
       return "Finn is talking";
-    case "ready":
-      return "Ready";
-    case "error":
-      return "Unavailable";
     default:
-      return null;
+      return status === "ready" ? "Ready" : status === "connecting" ? "Connecting…" : null;
   }
 }
 
@@ -108,9 +110,15 @@ export function StudyCopilot({
     [onHighlightCriterion],
   );
 
+  const onBargeIn = useCallback(() => {
+    // Clear in-flight authored bubble; Live transcript clears inside the hook.
+    // Do not touch grading — barge-in is UI-only (Clicky cancel pattern).
+  }, []);
+
   const {
     available,
     status,
+    voicePhase,
     error,
     transcript,
     activate,
@@ -118,7 +126,7 @@ export function StudyCopilot({
     setContext,
     stopListening,
     startListening,
-  } = useLiveTutor({ onCommand });
+  } = useLiveTutor({ onCommand, onBargeIn });
 
   useEffect(() => {
     if (tutorContext) setContext(tutorContext);
@@ -137,7 +145,7 @@ export function StudyCopilot({
   }, [state.s, misconception, onTeachDone]);
 
   const bubbleText = error ?? transcript ?? speech;
-  const statusLabel = available ? liveStatusLabel(status) : null;
+  const statusLabel = available ? liveStatusLabel(status, voicePhase) : null;
   const expression = liveExpression(status, pulsing, expressionFor(state));
 
   const openAsk = useCallback(async () => {

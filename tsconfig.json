@@ -12,14 +12,16 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noUnusedLocals": false,
-    "types": ["vite/client"],
+    "types": ["vite/client", "node"],
     "paths": {
       "@/*": ["./src/*"]
     }
   },
   "include": ["src"],
   "exclude": [
-    "src/agents",
+    "src/agents/_draft_python",
+    "src/agents/deployment",
+    "src/agents/tools",
     "src/db",
     "src/engine",
     "src/server",
