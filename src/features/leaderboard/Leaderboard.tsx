@@ -3,16 +3,6 @@ import { ChevronDown } from "lucide-react";
 import { Card } from "../../components/primitives";
 import { useStore } from "../../stores/store";
 
-/* Palette sampled directly from the liquid glass image */
-const V = { 
-  base: "#EBF5EE",     // Light mint background
-  text: "#1D604E",     // Deep glass emerald for headers & primary text
-  textSoft: "#4E7A6E", // Soft muted emerald for secondary labels
-  mid: "#3FA382",      // Primary glass emerald accent
-  bright: "#82C2A5",   // Sage green highlight
-  lightCircle: "#D3EDE0" // Soft mint circle fill
-};
-
 const MOCK_LEADERBOARD = [
   { name: "Sarah Wong", xp: 2150, rank: 2 },
   { name: "Ethan Lim", xp: 2450, rank: 1 },
@@ -33,13 +23,13 @@ export function Leaderboard() {
   const podiumOrder = [podium.find(p => p.rank === 2), podium.find(p => p.rank === 1), podium.find(p => p.rank === 3)];
 
   return (
-    <div className="flex flex-col gap-4 p-4 -m-4 min-h-screen" style={{ background: V.base }}>
+    <div className="flex flex-col gap-4 p-4 -m-4 min-h-screen" style={{ background: "var(--background)" }}>
       {/* Header Bar */}
       <div className="flex items-center justify-between">
-        <h1 className="text-[22px] font-extrabold" style={{ color: V.text }}>Leaderboard</h1>
+        <h1 className="text-[22px] font-extrabold" style={{ color: "var(--foreground)" }}>Leaderboard</h1>
         <button
           className="flex items-center gap-1 text-[13px] font-bold px-3 py-1.5 rounded-full shadow-sm"
-          style={{ background: "#ffffffcc", color: V.text, border: `1px solid ${V.mid}33` }}
+          style={{ background: "var(--card)", color: "var(--foreground)", border: "1px solid var(--border)" }}
         >
           {period} <ChevronDown size={14} />
         </button>
@@ -53,10 +43,10 @@ export function Leaderboard() {
             <div
               className="rounded-full flex items-center justify-center font-extrabold shadow-sm"
               style={{
-                width: p.rank === 1 ? 64 : 52, 
+                width: p.rank === 1 ? 64 : 52,
                 height: p.rank === 1 ? 64 : 52,
-                background: p.rank === 1 ? V.mid : p.rank === 2 ? V.bright : V.lightCircle,
-                color: p.rank === 3 ? V.text : "#fff", 
+                background: p.rank === 1 ? "var(--brand)" : p.rank === 2 ? "var(--brand-hover)" : "var(--muted)",
+                color: p.rank === 3 ? "var(--foreground)" : "var(--primary-foreground)",
                 fontSize: p.rank === 1 ? 22 : 18,
               }}
             >
@@ -65,35 +55,35 @@ export function Leaderboard() {
             <span
               className="text-[11px] font-extrabold px-2 py-0.5 rounded-full"
               style={{
-                background: p.rank === 1 ? `${V.mid}22` : V.lightCircle,
-                color: V.text,
+                background: p.rank === 1 ? "var(--brand-soft)" : "var(--muted)",
+                color: "var(--foreground)",
               }}
             >
               {p.rank}
             </span>
-            <span className="text-[12.5px] font-bold" style={{ color: V.text }}>{p.name}</span>
-            <span className="text-[11px]" style={{ color: V.textSoft }}>{p.xp.toLocaleString()} XP</span>
+            <span className="text-[12.5px] font-bold" style={{ color: "var(--foreground)" }}>{p.name}</span>
+            <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{p.xp.toLocaleString()} XP</span>
           </div>
         ))}
       </div>
 
       {/* Ranks 4–10 List Card */}
-      <Card className="p-2 shadow-sm" style={{ background: "#ffffffcc", border: `1px solid ${V.mid}22` }}>
+      <Card className="p-2 shadow-sm" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
         {rest.map((p) => (
           <div
             key={p.name}
             className="flex items-center gap-3 px-2 py-2.5 rounded-xl transition-colors"
-            style={p.me ? { background: `${V.mid}1A` } : undefined}
+            style={p.me ? { background: "var(--brand-soft)" } : undefined}
           >
-            <span className="text-[13px] font-bold w-5 text-center" style={{ color: V.textSoft }}>{p.rank}</span>
+            <span className="text-[13px] font-bold w-5 text-center" style={{ color: "var(--muted-foreground)" }}>{p.rank}</span>
             <div
               className="rounded-full flex items-center justify-center text-[13px] font-bold shrink-0"
-              style={{ width: 34, height: 34, background: V.lightCircle, color: V.text }}
+              style={{ width: 34, height: 34, background: "var(--muted)", color: "var(--foreground)" }}
             >
               {p.name[0]}
             </div>
-            <span className="flex-1 text-[14px] font-bold" style={{ color: V.text }}>{p.name}</span>
-            <span className="text-[13px] font-bold" style={{ color: V.textSoft }}>{p.xp.toLocaleString()} XP</span>
+            <span className="flex-1 text-[14px] font-bold" style={{ color: "var(--foreground)" }}>{p.name}</span>
+            <span className="text-[13px] font-bold" style={{ color: "var(--muted-foreground)" }}>{p.xp.toLocaleString()} XP</span>
           </div>
         ))}
       </Card>

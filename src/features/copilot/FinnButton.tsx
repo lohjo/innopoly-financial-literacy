@@ -22,7 +22,7 @@ export function FinnButton() {
           boxShadow: "var(--shadow-2)",
         }}
       >
-        <FinnAvatar expression={open ? "attentive" : "neutral"} size={38} />
+        <FinnAvatar expression={open ? "attentive" : "neutral"} size={438} />
       </button>
       {open && (
         <div

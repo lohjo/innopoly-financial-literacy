@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { ChevronLeft, Clock } from "lucide-react";
 import { Card, SecondaryButton } from "../../components/primitives";
 import { resetAll, resetClass, setState, useStore, type MemoryClass } from "../../stores/store";
+import { THEMES } from "../../styles/theme-registry";
 
 const MEMORY_CLASSES: { id: MemoryClass; label: string; desc: string }[] = [
   { id: "profile", label: "Profile", desc: "your name, goal and jurisdiction" },
@@ -36,6 +37,33 @@ export function Settings() {
         <p className="text-[12px] -mt-2" style={{ color: "var(--muted-foreground)" }}>
           Reduced motion follows your system setting automatically.
         </p>
+      </Card>
+
+      {/* Theme / palette picker */}
+      <Card className="p-4 flex flex-col gap-3">
+        <p className="font-bold text-[14px]">Appearance</p>
+        <p className="text-[12px] -mt-2" style={{ color: "var(--muted-foreground)" }}>
+          Pick a look for the whole app.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setState((s) => ({ prefs: { ...s.prefs, palette: t.id } }))}
+              className="flex items-center gap-2.5 p-3 rounded-[14px] text-left"
+              style={{
+                border: prefs.palette === t.id ? "2px solid var(--brand)" : "1px solid var(--border)",
+                background: prefs.palette === t.id ? "var(--brand-soft)" : "var(--card)",
+              }}
+            >
+              <div className="flex shrink-0 rounded-lg overflow-hidden" style={{ width: 26, height: 26 }}>
+                <div style={{ flex: 1, background: t.preview[0] }} />
+                <div style={{ flex: 1, background: t.preview[1] }} />
+              </div>
+              <span className="text-[13px] font-bold">{t.name}</span>
+            </button>
+          ))}
+        </div>
       </Card>
 
       {/* memory inspector (spec §3.7: inspect / reset per class) */}

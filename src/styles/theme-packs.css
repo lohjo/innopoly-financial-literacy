@@ -1,0 +1,94 @@
+html.theme-sunburst {
+  --background: #FFF7ED;
+  --foreground: #5A2D00;
+  --card: #ffffff;
+  --card-foreground: #5A2D00;
+  --muted: #FFEFD6;
+  --muted-foreground: #8A5A2A;
+  --accent: #FFEFD6;
+  --accent-foreground: #E67A16;
+  --border: #FFD9A8;
+  --brand: #FF9B3E;
+  --brand-hover: #E67A16;
+  --brand-soft: #FFEFD6;
+  --success: #2FA85E;
+  --warning: #E67A16;
+  --error: #b3261e;
+  --info: #2368d8;
+}
+
+html.theme-glasswing {
+  --background: #F4F2FA;
+  --foreground: #1c1c2e;
+  --card: #ffffff;
+  --card-foreground: #1c1c2e;
+  --muted: #EDEAF9;
+  --muted-foreground: #7c7c96;
+  --accent: #EDEAF9;
+  --accent-foreground: #5535c9;
+  --border: #DCD5F2;
+  --brand: #8B7CF6;
+  --brand-hover: #5535c9;
+  --brand-soft: #EDEAF9;
+  --success: #157a4b;
+  --warning: #9a5a00;
+  --error: #b3261e;
+  --info: #2368d8;
+}
+
+html.theme-sprout-arcade {
+  --background: #14171F;
+  --foreground: #ffffff;
+  --card: #1E212C;
+  --card-foreground: #ffffff;
+  --muted: #23283a;
+  --muted-foreground: #8b93a5;
+  --accent: #16803C22;
+  --accent-foreground: #5CFFA0;
+  --border: #2A2E3B;
+  --brand: #0EA55A;
+  --brand-hover: #16803C;
+  --brand-soft: #16803C22;
+  --success: #5CFFA0;
+  --warning: #E67A2E;
+  --error: #ffb4ab;
+  --info: #3EC6FF;
+}
+
+html.theme-violet-glass {
+  --background: #F5F2FF;
+  --foreground: #2A1458;
+  --card: #ffffff;
+  --card-foreground: #2A1458;
+  --muted: #EDE7FB;
+  --muted-foreground: #6B5A99;
+  --accent: #EDE7FB;
+  --accent-foreground: #6B3FD6;
+  --border: #DCD0F5;
+  --brand: #6B3FD6;
+  --brand-hover: #A98CF0;
+  --brand-soft: #EDE7FB;
+  --success: #157a4b;
+  --warning: #9a5a00;
+  --error: #b3261e;
+  --info: #2368d8;
+}
+
+html.theme-grass-glass {
+  --background: #EBF5EE;
+  --foreground: #1D604E;
+  --card: #ffffff;
+  --card-foreground: #1D604E;
+  --muted: #D3EDE0;
+  --muted-foreground: #4E7A6E;
+  --accent: #D3EDE0;
+  --accent-foreground: #2FA85E;
+  --border: #BFE5D2;
+  --brand: #3FA382;
+  --brand-hover: #2FA85E;
+  --brand-soft: #D3EDE0;
+  --success: #2FA85E;
+  --warning: #9a5a00;
+  --error: #b3261e;
+  --info: #2368d8;
+}

@@ -14,6 +14,7 @@ export type Prefs = {
   captions: boolean;
   reduceMotion: boolean;
   theme: "light" | "dark" | "system";
+  palette: "default" | "sunburst" | "glasswing" | "sprout-arcade" | "violet-glass" | "grass-glass";
 };
 
 export type CallRecord = {
@@ -45,7 +46,7 @@ const KEY = "finfy.v1";
 const DEFAULT: StoreState = {
   v: 1,
   profile: null,
-  prefs: { captions: true, reduceMotion: false, theme: "system" },
+  prefs: { captions: true, reduceMotion: false, theme: "system", palette: "default" },
   evidence: [],
   xp: 0,
   streak: { current: 0, lastActiveDay: null },

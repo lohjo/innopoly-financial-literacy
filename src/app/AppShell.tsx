@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { Flame, Home, Trophy, User, Zap } from "lucide-react";
 import { Num } from "../components/primitives";
 import { useStore } from "../stores/store";
 import { FinnButton } from "../features/copilot/FinnButton";
+import { applyPaletteClass } from "../styles/theme-registry";
 
 const NAV = [
   { to: "/today", label: "Today", icon: Home },
@@ -75,6 +77,12 @@ function BottomNav() {
 /** Tab layout: TopBar + content + BottomNav. Content column caps at 430px on phone-ish
     screens and widens for md+ (spec §6.3 responsive; no phone frame). */
 export function AppShell() {
+  const palette = useStore((s) => s.prefs.palette);
+
+  useEffect(() => {
+    applyPaletteClass(palette);
+  }, [palette]);
+
   return (
     <div className="flex flex-col" style={{ minHeight: "100dvh", background: "var(--background)" }}>
       <TopBar />

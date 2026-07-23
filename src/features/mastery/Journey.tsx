@@ -1,22 +1,29 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { Check, ChevronDown, ChevronUp, Lock, Phone, Star, Sparkles, Moon } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Check, ChevronDown, Lock, Phone, Star } from "lucide-react";
 import { useStore } from "../../stores/store";
 import { CHAPTERS } from "../../content/chapters";
 import { lessonById } from "../../content/lessons";
 import { scenarioById } from "../../content/scenarios";
+import { CylinderNode, TouchRipple, CHARACTER_IMAGES, Scenery } from "./JourneyDecor";
 
-const NODE_GAP_Y = 115; // Generous vertical gap so nodes don't stack
-const NODE_D = 48;     // Compact circle node size
-const CALL_D = 38;     // Compact phone call node size
-const OFFSET_FRACTIONS = [0, 0.25, 0.35, 0.20, 0, -0.20, -0.35, -0.25]; // Wide curve swing
+const NODE_GAP_Y = 120;
+const NODE_D = 56;
+const CALL_D = 40;
+const OFFSET_FRACTIONS = [0, 0.25, 0.35, 0.20, 0, -0.20, -0.35, -0.25];
+
+const SPRING_CURTAIN = { type: "spring" as const, stiffness: 280, damping: 32 };
+const SPRING_PRESS = { type: "spring" as const, stiffness: 420, damping: 18 };
+const SPRING_POP = { type: "spring" as const, stiffness: 340, damping: 20 };
+const SPRING_CHEVRON = { type: "spring" as const, stiffness: 300, damping: 22 };
 
 const FLAVORS = [
-  { a: "#6ED98E", b: "#2FA85E" },
-  { a: "#8FE0A8", b: "#3CB86E" },
-  { a: "#5FCB8A", b: "#248C52" },
-  { a: "#A3E8B8", b: "#4CC17E" },
-  { a: "#7BD99C", b: "#33A362" },
+  { a: "var(--brand)", b: "var(--brand-hover)" },
+  { a: "var(--success)", b: "var(--brand-hover)" },
+  { a: "var(--brand)", b: "var(--success)" },
+  { a: "var(--brand-hover)", b: "var(--brand)" },
+  { a: "var(--success)", b: "var(--brand)" },
 ];
 
 type Step =
@@ -40,7 +47,7 @@ function usePath(steps: Step[], width: number) {
   return useMemo(() => {
     const points = steps.map((s, i) => ({
       x: width / 2 + OFFSET_FRACTIONS[i % OFFSET_FRACTIONS.length] * width,
-      y: i * NODE_GAP_Y + NODE_D / 2 + 45, // Top padding ensures node 1 stays clearly below header
+      y: i * NODE_GAP_Y + NODE_D / 2 + 50,
     }));
     let d = "";
     points.forEach((p, i) => {
@@ -49,97 +56,9 @@ function usePath(steps: Step[], width: number) {
       const midY = (prev.y + p.y) / 2;
       d += `C ${prev.x} ${midY}, ${p.x} ${midY}, ${p.x} ${p.y} `;
     });
-    const height = points.length ? points[points.length - 1].y + NODE_D + 35 : 0;
+    const height = points.length ? points[points.length - 1].y + NODE_D + 40 : 0;
     return { points, d, height };
   }, [steps, width]);
-}
-
-/* Background Scenery: Uses a 4x3 non-overlapping grid with randomized internal offsets */
-function Scenery({ seed, height, width }: { seed: number; height: number; width: number }) {
-  const items = useMemo(() => {
-    const rand = (n: number) => {
-      const x = Math.sin(seed * 999 + n * 37.7) * 10000;
-      return x - Math.floor(x);
-    };
-
-    const rows = 4;
-    const cols = 3;
-    const result = [];
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const index = r * cols + c;
-        const size = 12 + rand(index + 20) * 14;
-        const shapeType = index % 6; // Cycles 1 shape type sequentially
-
-        // Cell math ensures zero overlapping shapes
-        const leftPercent = (c / cols) * 80 + 10 + (rand(index + 5) * 12 - 6);
-        const topPx = (r / rows) * (height - 60) + 30 + (rand(index + 15) * 20 - 10);
-
-        result.push({
-          left: Math.max(5, Math.min(85, leftPercent)),
-          top: topPx,
-          size,
-          shapeType,
-          opacity: 0.22 + rand(index + 40) * 0.25,
-        });
-      }
-    }
-
-    return result;
-  }, [seed, height, width]);
-
-  return (
-    <>
-      {items.map((it, i) => (
-        <div
-          key={i}
-          className="absolute flex items-center justify-center pointer-events-none"
-          style={{
-            left: `${it.left}%`,
-            top: it.top,
-            opacity: it.opacity,
-          }}
-        >
-          {/* Shape 1: Star */}
-          {it.shapeType === 0 && <Star size={it.size} color="#ffffff" fill="#ffffff" />}
-
-          {/* Shape 2: Sparkles */}
-          {it.shapeType === 1 && <Sparkles size={it.size * 1.2} color="#ffffff" />}
-
-          {/* Shape 3: Moon */}
-          {it.shapeType === 2 && <Moon size={it.size} color="#ffffff" fill="#ffffff" />}
-
-          {/* Shape 4: 4-Point Diamond Star */}
-          {it.shapeType === 3 && (
-            <svg width={it.size} height={it.size} viewBox="0 0 24 24" fill="#ffffff">
-              <path d="M12 0C12 6.627 6.627 12 0 12C6.627 12 12 17.373 12 24C12 17.373 17.373 12 24 12C17.373 12 12 6.627 12 0Z" />
-            </svg>
-          )}
-
-          {/* Shape 5: Hollow Glass Ring */}
-          {it.shapeType === 4 && (
-            <svg width={it.size} height={it.size} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="8" stroke="#ffffff" strokeWidth="2.5" fill="none" />
-            </svg>
-          )}
-
-          {/* Shape 6: Glass Cloud Pill */}
-          {it.shapeType === 5 && (
-            <div
-              style={{
-                width: it.size * 1.8,
-                height: it.size * 0.85,
-                borderRadius: 999,
-                background: "rgba(255, 255, 255, 0.7)",
-                boxShadow: "0 0 8px rgba(255, 255, 255, 0.3)",
-              }}
-            />
-          )}
-        </div>
-      ))}
-    </>
-  );
 }
 
 export function ChapterPath({
@@ -161,7 +80,7 @@ export function ChapterPath({
 
   const headerRef = useRef<HTMLButtonElement>(null);
   const [width, setWidth] = useState(340);
-  
+
   useLayoutEffect(() => {
     if (!headerRef.current) return;
     const ro = new ResizeObserver((entries) => {
@@ -174,169 +93,204 @@ export function ChapterPath({
 
   const { points, d, height } = usePath(steps, width);
 
+  const pathRef = useRef<SVGPathElement>(null);
+  const [pawPoints, setPawPoints] = useState<{ x: number; y: number; angle: number }[]>([]);
+
+  useLayoutEffect(() => {
+    if (!pathRef.current || !d) return;
+    const el = pathRef.current;
+    const total = el.getTotalLength();
+    if (!total) return;
+    const spacing = 22;
+    const count = Math.floor(total / spacing);
+    const pts: { x: number; y: number; angle: number }[] = [];
+    for (let i = 1; i < count; i++) {
+      const len = i * spacing;
+      const p = el.getPointAtLength(len);
+      const pBefore = el.getPointAtLength(Math.max(0, len - 1));
+      const pAfter = el.getPointAtLength(Math.min(total, len + 1));
+      const angle = (Math.atan2(pAfter.y - pBefore.y, pAfter.x - pBefore.x) * 180) / Math.PI + 90;
+      pts.push({ x: p.x, y: p.y, angle });
+    }
+    setPawPoints(pts);
+  }, [d]);
+
   const chapterLessonIds = chapter.lessons.map((l) => l.id);
   const hasCurrent = currentId ? chapterLessonIds.includes(currentId) : false;
   const chapterDone = chapterLessonIds.every((id) => lessonsCompleted.includes(id));
   const [open, setOpen] = useState(hasCurrent || (!chapterDone && chapterIndex === 0));
 
   return (
-    <div className="relative w-full">
-      {/* Glossy Liquid Glass Chapter Header Pill */}
+    <div className="relative w-full overflow-hidden">
       <div className="sticky top-0 z-20 w-full">
-        <button
-          ref={headerRef}
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          className="w-full text-left px-5 py-4 relative overflow-hidden transition-all duration-300 shadow-lg"
-          style={{
-            background: "linear-gradient(135deg, #5ECB8D 0%, #30A35C 100%)",
-            border: "1.5px solid rgba(255, 255, 255, 0.65)",
-            borderBottom: open ? "none" : "1.5px solid rgba(255, 255, 255, 0.65)",
-            borderRadius: open ? "28px 28px 0 0" : "28px",
-            boxShadow: "0 8px 24px -6px rgba(40, 140, 80, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4)",
-          }}
-        >
-          <div 
-            className="absolute -right-6 -top-6 w-24 h-24 rounded-full pointer-events-none" 
-            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 70%)" }} 
-          />
-
-          <div className="flex items-center justify-between gap-3 relative z-10">
-            <div className="min-w-0 pr-2">
-              <h2 className="text-[18px] font-extrabold text-white tracking-tight drop-shadow-sm">
-                {chapter.title}
-              </h2>
-              <p className="text-[12px] mt-0.5 font-bold text-emerald-100 opacity-95 leading-snug">
-                {chapter.tagline}
-              </p>
+        <TouchRipple color="rgba(255,255,255,.4)">
+          <motion.button
+            ref={headerRef}
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            whileTap={{ scale: 0.985 }}
+            transition={SPRING_PRESS}
+            className="w-full text-left px-5 py-4 relative shadow-lg"
+            style={{
+              background: "linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%)",
+              border: "1.5px solid rgba(255, 255, 255, 0.65)",
+              borderBottom: open ? "none" : "1.5px solid rgba(255, 255, 255, 0.65)",
+              borderRadius: open ? "28px 28px 0 0" : "28px",
+              boxShadow: "0 8px 24px -6px color-mix(in srgb, var(--brand-hover) 40%, transparent), inset 0 2px 4px rgba(255, 255, 255, 0.4)",
+            }}
+          >
+            <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 70%)" }} />
+            <div className="flex items-center justify-between gap-3 relative z-10">
+              <div className="min-w-0 pr-2">
+                <h2 className="text-[18px] font-extrabold tracking-tight drop-shadow-sm" style={{ color: "var(--primary-foreground)" }}>
+                  {chapter.title}
+                </h2>
+                <p className="text-[12px] mt-0.5 font-bold opacity-95 leading-snug" style={{ color: "var(--primary-foreground)" }}>
+                  {chapter.tagline}
+                </p>
+              </div>
+              <motion.div
+                animate={{ rotate: open ? 180 : 0 }}
+                transition={SPRING_CHEVRON}
+                className="flex items-center justify-center rounded-full shrink-0 shadow-inner"
+                style={{ width: 36, height: 36, background: "rgba(255, 255, 255, 0.3)", backdropFilter: "blur(4px)", border: "1px solid rgba(255, 255, 255, 0.5)" }}
+              >
+                <ChevronDown size={20} color="var(--primary-foreground)" strokeWidth={3} />
+              </motion.div>
             </div>
-
-            <div
-              className="flex items-center justify-center rounded-full shrink-0 shadow-inner"
-              style={{
-                width: 36,
-                height: 36,
-                background: "rgba(255, 255, 255, 0.3)",
-                backdropFilter: "blur(4px)",
-                border: "1px solid rgba(255, 255, 255, 0.5)",
-              }}
-            >
-              {open ? (
-                <ChevronUp size={20} color="#ffffff" strokeWidth={3} />
-              ) : (
-                <ChevronDown size={20} color="#ffffff" strokeWidth={3} />
-              )}
-            </div>
-          </div>
-        </button>
+          </motion.button>
+        </TouchRipple>
       </div>
 
-      {/* Accordion Liquid Glass Lesson Body Container */}
-      <div
-        className="w-full relative z-0 overflow-hidden transition-all duration-450 ease-[cubic-bezier(.22,1,.36,1)]"
-        style={{ height: open ? height : 0 }}
-      >
+      <motion.div className="w-full relative z-0 overflow-hidden" animate={{ height: open ? height : 0 }} transition={SPRING_CURTAIN}>
         <div
           className="relative w-full overflow-hidden"
           style={{
             height,
-            background: "linear-gradient(180deg, rgba(180, 235, 198, 0.85) 0%, rgba(145, 215, 170, 0.8) 50%, rgba(115, 195, 145, 0.8) 100%)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            borderLeft: "1.5px solid rgba(255, 255, 255, 0.65)",
-            borderRight: "1.5px solid rgba(255, 255, 255, 0.65)",
-            borderBottom: "1.5px solid rgba(255, 255, 255, 0.65)",
+            background: "color-mix(in srgb, var(--brand) 18%, var(--background))",
+            borderLeft: "1.5px solid var(--border)",
+            borderRight: "1.5px solid var(--border)",
+            borderBottom: "1.5px solid var(--border)",
             borderRadius: "0 0 28px 28px",
-            boxShadow: "0 12px 28px -10px rgba(35, 110, 65, 0.25)",
+            boxShadow: "0 12px 28px -10px rgba(0,0,0,.12)",
           }}
         >
           <Scenery seed={chapterIndex + 1} height={height} width={width} />
 
           <svg width={width} height={height} className="absolute inset-0 w-full h-full pointer-events-none">
-            <path d={d} fill="none" stroke="#ffffff" strokeWidth={8} strokeLinecap="round" opacity={0.45} />
-            <path d={d} fill="none" stroke="#3DA366" strokeWidth={4} strokeDasharray="1 14" strokeLinecap="round" opacity={0.75} />
+            <path ref={pathRef} d={d} fill="none" stroke="none" />
+            {pawPoints.map((pt, idx) => (
+              <g key={idx} transform={`translate(${pt.x}, ${pt.y}) rotate(${pt.angle}) scale(${idx % 2 === 0 ? 1 : -1}, 1)`} opacity={0.55}>
+                <ellipse cx="0" cy="0" rx="4.2" ry="5.2" fill="var(--muted-foreground)" />
+                <ellipse cx="-4" cy="-6" rx="1.6" ry="2" fill="var(--muted-foreground)" />
+                <ellipse cx="0" cy="-7.5" rx="1.6" ry="2" fill="var(--muted-foreground)" />
+                <ellipse cx="4" cy="-6" rx="1.6" ry="2" fill="var(--muted-foreground)" />
+              </g>
+            ))}
           </svg>
 
-          {steps.map((step, i) => {
-            const p = points[i];
+          {points.length > 0 && (
+            <div
+              className="absolute pointer-events-none flex flex-col items-center"
+              style={{
+                left: Math.max(20, points[Math.floor(points.length / 2)].x - width * 0.72),
+                top: points[Math.floor(points.length / 2)].y - 40,
+              }}
+            >
+              <img src={CHARACTER_IMAGES[chapterIndex % CHARACTER_IMAGES.length]} alt="" style={{ width: 84 }} />
+            </div>
+          )}
 
-            if (step.kind === "call") {
-              const done = callsCompleted.some((c) => c.scenarioId === step.id);
-              return (
-                <button
-                  key={step.id}
-                  onClick={() => nav(`/call/${step.id}`)}
-                  className="absolute flex flex-col items-center gap-0.5 -translate-x-1/2 -translate-y-1/2 z-0"
-                  style={{ left: p.x, top: p.y, width: CALL_D + 90 }}
-                >
-                  <div
-                    className="flex items-center justify-center rounded-full shrink-0"
-                    style={{
-                      width: CALL_D, height: CALL_D,
-                      background: done ? "linear-gradient(135deg, rgba(94,224,140,.95), rgba(36,140,82,.95))" : "linear-gradient(135deg, rgba(255,255,255,.95), rgba(230,255,235,.9))",
-                      boxShadow: done ? "0 4px 10px -3px rgba(36,140,82,.5)" : "0 3px 8px -2px rgba(94,224,140,.35)",
-                      border: "2px solid rgba(255,255,255,.9)",
-                    }}
+          <AnimatePresence>
+            {steps.map((step, i) => {
+              const p = points[i];
+
+              if (step.kind === "call") {
+                const done = callsCompleted.some((c) => c.scenarioId === step.id);
+                return (
+                  <motion.button
+                    key={step.id}
+                    onClick={() => nav(`/call/${step.id}`)}
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    whileTap={{ scale: 0.88 }}
+                    transition={{ ...SPRING_POP, delay: i * 0.05 }}
+                    className="absolute flex flex-col items-center gap-0.5 -translate-x-1/2 -translate-y-1/2 z-0"
+                    style={{ left: p.x, top: p.y, width: CALL_D + 90 }}
                   >
-                    <Phone size={15} color={done ? "#fff" : "#2FA85E"} />
+                    <TouchRipple color="rgba(255,255,255,.4)">
+                      <CylinderNode size={CALL_D} colorTop={done ? "var(--video)" : "var(--card)"}>
+                        <Phone size={15} color={done ? "var(--primary-foreground)" : "var(--video)"} />
+                      </CylinderNode>
+                    </TouchRipple>
+                    <span className="text-[10px] font-extrabold text-center leading-tight px-1.5 py-0.5 rounded-full shadow-sm" style={{ color: "var(--foreground)", background: "var(--card)" }}>
+                      {step.title}
+                    </span>
+                  </motion.button>
+                );
+              }
+
+              const done = lessonsCompleted.includes(step.id);
+              const current = step.id === currentId;
+              const locked = !done && !current;
+              const flavor = FLAVORS[step.index % FLAVORS.length];
+              const size = current ? NODE_D + 10 : NODE_D;
+              const labelOnLeft = OFFSET_FRACTIONS[i % OFFSET_FRACTIONS.length] > 0;
+
+              return (
+                <motion.div
+                  key={step.id}
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ ...SPRING_POP, delay: i * 0.05 }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 z-0 flex items-center gap-3"
+                  style={{ left: p.x, top: p.y, flexDirection: labelOnLeft ? "row-reverse" : "row" }}
+                >
+                  <button disabled={locked} onClick={() => nav(`/learn/${step.id}`)} className="relative shrink-0">
+                    {current && (
+                      <motion.div
+                        className="absolute rounded-full pointer-events-none"
+                        style={{ width: size + 14, height: size + 14, top: -7, left: -7, background: "color-mix(in srgb, var(--brand) 35%, transparent)" }}
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
+                        transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                      />
+                    )}
+                    {locked ? (
+                      <CylinderNode size={size} colorTop="var(--muted)">
+                        <Lock size={17} color="var(--muted-foreground)" />
+                      </CylinderNode>
+                    ) : (
+                      <TouchRipple color="rgba(255,255,255,.55)">
+                        <CylinderNode size={size} colorTop={flavor.a}>
+                          {done ? (
+                            <Check size={20} strokeWidth={3.5} color="var(--primary-foreground)" />
+                          ) : (
+                            <Star size={20} strokeWidth={2.5} color="var(--primary-foreground)" fill="var(--primary-foreground)" />
+                          )}
+                        </CylinderNode>
+                      </TouchRipple>
+                    )}
+                  </button>
+
+                  <div className="flex flex-col gap-1 shrink-0" style={{ alignItems: labelOnLeft ? "flex-end" : "flex-start", maxWidth: 130 }}>
+                    <span
+                      className="text-[10.5px] font-extrabold text-center leading-tight px-2 py-0.5 rounded-full shadow-sm"
+                      style={{ color: "var(--foreground)", background: "var(--card)", opacity: locked ? 0.7 : 1 }}
+                    >
+                      {step.title}
+                    </span>
+                    {current && (
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm" style={{ background: flavor.a, color: "var(--primary-foreground)" }}>
+                        ★ START · ~{step.minutes} MIN
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[10px] font-extrabold text-center leading-tight px-1.5 py-0.5 rounded-full shadow-sm" style={{ color: "#0F4A26", background: "#ffffffdd" }}>
-                    {step.title}
-                  </span>
-                </button>
+                </motion.div>
               );
-            }
-
-            const done = lessonsCompleted.includes(step.id);
-            const current = step.id === currentId;
-            const locked = !done && !current;
-            const flavor = FLAVORS[step.index % FLAVORS.length];
-            const size = current ? NODE_D + 8 : NODE_D;
-
-            return (
-              <button
-                key={step.id}
-                disabled={locked}
-                onClick={() => nav(`/learn/${step.id}`)}
-                className="absolute flex flex-col items-center gap-0.5 -translate-x-1/2 -translate-y-1/2 z-0"
-                style={{ left: p.x, top: p.y, width: size + 100 }}
-              >
-                {current && (
-                  <div className="absolute rounded-full animate-ping pointer-events-none" style={{ width: size + 10, height: size + 10, top: -5, left: "calc(50% - " + (size + 10)/2 + "px)", background: `${flavor.a}66` }} />
-                )}
-                <div
-                  className="relative flex items-center justify-center rounded-full shrink-0 font-extrabold text-[15px]"
-                  style={{
-                    width: size, height: size,
-                    background: locked
-                      ? "linear-gradient(180deg, rgba(230,238,232,0.85), rgba(200,215,205,0.85))"
-                      : `linear-gradient(180deg, ${flavor.a}, ${flavor.b})`,
-                    color: locked ? "#7A8F82" : "#fff",
-                    border: "3px solid #ffffff",
-                    boxShadow: locked
-                      ? "0 3px 8px -2px rgba(0,0,0,.1)"
-                      : `0 6px 14px -4px ${flavor.b}aa, inset 0 1.5px 3px rgba(255,255,255,0.4)`,
-                  }}
-                >
-                  <div className="absolute rounded-full pointer-events-none" style={{ width: "55%", height: "30%", top: "12%", left: "22%", background: "#ffffff40" }} />
-                  {done ? <Check size={18} strokeWidth={3.5} /> : locked ? <Lock size={15} /> : step.index + 1}
-                </div>
-                <span
-                  className="text-[10.5px] font-extrabold text-center leading-tight px-2 py-0.5 rounded-full shadow-sm"
-                  style={{ color: "#0F4A26", background: locked ? "#ffffffaa" : "#ffffffee", opacity: locked ? 0.75 : 1 }}
-                >
-                  {step.title}
-                </span>
-                {current && (
-                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm" style={{ background: flavor.a, color: "#fff" }}>
-                    ★ START · ~{step.minutes} MIN
-                  </span>
-                )}
-              </button>
-            );
-          })}
+            })}
+          </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
